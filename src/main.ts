@@ -17,10 +17,10 @@ const vuetify = createVuetify({
     }
   })
 
-import Form from './Form.vue'
+import ElectricityCalculator from './ElectricityCalculator.vue'
 // import router from './router'
 
-const app = createApp(Form)
+const app = createApp(ElectricityCalculator)
 app.use(vuetify)
 
 // app.use(createPinia())

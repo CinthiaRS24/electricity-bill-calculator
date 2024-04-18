@@ -1,4 +1,6 @@
-<script>
+<script lang="ts">
+import type { HeaderItem } from '../model/Types';
+
 export default {
   props: {
     desserts: {
@@ -15,7 +17,7 @@ export default {
     }
   },
   computed: {
-    headers() {
+    headers(): HeaderItem[] {
       return [
         {
           title: 'Detalle', align: 'center',
@@ -27,14 +29,14 @@ export default {
           title: 'Fecha',
           align: 'center',
           children: [
-            { title: this.endDate, value: 'start' },
-            { title: this.startDate, value: 'end' },
+            { title: this.endDate, value: 'start', align: 'center' },
+            { title: this.startDate, value: 'end', align: 'center' },
           ],
         },
         {
           title: 'Días', align: 'center',
           children: [
-            { title: this.daysUsed(), value: 'difference', align: 'center', },
+            { title: String(this.daysUsed()), value: 'difference', align: 'center', },
           ],
         },
         {
@@ -54,7 +56,7 @@ export default {
   },
   methods: {
     daysUsed() {
-      const diferenciaEnMilisegundos = new Date(this.endDate) - new Date(this.startDate);
+      const diferenciaEnMilisegundos = Number(new Date(this.endDate)) - Number(new Date(this.startDate));
       const diferenciaEnDías = diferenciaEnMilisegundos / (1000 * 60 * 60 * 24);
       console.log('diferenciaEnDías', diferenciaEnDías);
       return diferenciaEnDías;

@@ -1,10 +1,7 @@
 <script lang="ts">
-import InfoTable from './components/InfoTable.vue'
+import type { InfoItem } from "../model/Types"
 
 export default {
-    components: {
-        InfoTable
-    },
     data() {
         return {
             info: [
@@ -15,7 +12,7 @@ export default {
                     cuarto: 0,
                     tercero: 0,
                     segundo: 0,
-                    primero: "",
+                    primero: 0,
                 },
                 {
                     date: "",
@@ -24,9 +21,9 @@ export default {
                     cuarto: 0,
                     tercero: 0,
                     segundo: 0,
-                    primero: "",
+                    primero: 0,
                 }
-            ],
+            ] as InfoItem[],
             data: [
                 {
                     title: "",
@@ -40,43 +37,47 @@ export default {
         }
     },
     computed: {
-        fullFields() {
-        return this.info.every(item => 
-            Object.keys(item).every(key => 
-                key === "primero" || (item[key] !== 0 && item.date !== "")
-            )
-        );
-    }
+        fullFields(): boolean {
+            return this.info.every((item: InfoItem) =>
+                Object.keys(item).every((key: string) =>
+                    key === "primero" || (item[key] !== 0 && item.date !== "")
+                )
+            );
+        }
     },
     methods: {
         onClicker() {
-            const keys = Object.keys(this.info[0]).slice(1);
+            const keys: string[] = Object.keys(this.info[0]).slice(1);
             const newValues = this.assignValuesByFloor(keys);
             this.calculateWats(newValues);
             this.updateData(newValues);
+            this.$emit('calculated', { tableData: this.data, startDate: this.info[1].date, endDate: this.info[0].date });
         },
-        assignValuesByFloor(keys) {
-            return keys.map((floor, index) => {
+        assignValuesByFloor(keys: string[]) {
+            return keys.map((floor: string, index: number) => {
                 const isFirstKey = index === 0;
                 const lastIndex = keys.length - 1;
 
+                const value1 = Number(this.info[0][floor]);
+                const value2 = Number(this.info[1][floor]);
+
                 return {
                     title: isFirstKey ? floor + " + tanque" : floor,
-                    start: Number(this.info[0][floor]).toFixed(2),
-                    end: Number(this.info[1][floor]).toFixed(2),
-                    difference: (this.info[0][floor] - this.info[1][floor]).toFixed(2),
-                    kwats: ((this.info[0][floor] - this.info[1][floor]) / 30).toFixed(2),
-                    wats: index === lastIndex ? 0 : Math.round(((this.info[0][floor] - this.info[1][floor]) / 30 * 1000)),
+                    start: value1.toFixed(2),
+                    end: value2.toFixed(2),
+                    difference: (value1 - value2).toFixed(2),
+                    kwats: ((value1 - value2) / 30).toFixed(2),
+                    wats: index === lastIndex ? 0 : Math.round(((value1 - value2) / 30 * 1000)),
                 };
             });
         },
-        calculateWats(value) {
+        calculateWats(value: { wats: number }[]) {
             const sumaWats = value.slice(1, -1).reduce((acc, obj) => acc + obj.wats, 0);
             const primerElementoWats = value[0].wats;
             const diferencia = primerElementoWats - sumaWats;
             value[value.length - 1].wats = Math.round(diferencia);
         },
-        updateData(value) {
+        updateData(value: any[]) {
             this.data = value;
         }
     },
@@ -86,7 +87,7 @@ export default {
 
 <template>
     <v-container style="display: flex; flex-direction: row;">
-        <v-form style="width: 30%; margin: initial;">
+        <v-form style="margin: initial;">
             <v-container>
                 <v-select label="Select" :items="['Lote B', 'Lote C']" variant="outlined"></v-select>
                 <div class="info-container">
@@ -127,22 +128,18 @@ export default {
                         </v-col>
                     </v-row>
                 </div>
+                <div class="div-final">
+                    <!-- <div>
+                        Monto a pagar: <input v-model="number" />
+                    </div> -->
+                    <v-btn @click="onClicker" :disabled="!fullFields" variant="tonal">
+                        Calcular
+                    </v-btn>
+                </div>
             </v-container>
         </v-form>
-
-        <v-container style="width: 50%; margin-right: auto;">
-            <InfoTable :desserts="data" :endDate="info[0].date" :startDate="info[1].date" />
-        </v-container>
     </v-container>
 
-    <div class="div-final">
-        <div>
-            Monto a pagar: <input v-model="number" />
-        </div>
-        <v-btn @click="onClicker" :disabled="!fullFields" variant="tonal">
-            Calcular
-        </v-btn>
-    </div>
 </template>
 
 <style scoped>
