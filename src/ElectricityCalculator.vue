@@ -29,12 +29,14 @@ export default {
 </script>
 
 <template>
-    <v-container style="display: flex; flex-direction: row;">
-        <v-container style="width: 40%">
-            <ConsumptionForm @calculated="updateData" />
-        </v-container>
-        <v-container style="width: 60%">
-            <InfoTable :desserts="tableData" :endDate="endDate" :startDate="startDate" />
-        </v-container>
+    <v-container fluid>
+        <v-row>
+            <v-col cols="4">
+                <ConsumptionForm @calculated="updateData" />
+            </v-col>
+            <v-col cols="6">
+                <InfoTable :calculatedData="tableData" :endDate="endDate" :startDate="startDate" />
+            </v-col>
+        </v-row>
     </v-container>
 </template>

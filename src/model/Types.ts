@@ -11,6 +11,6 @@ export interface InfoItem {
 
 export interface HeaderItem {
     title: string;
-    align: string;
+    align?: 'start' | 'center' | 'end'; 
     children: { title: string; value: string; align: string }[];
 }

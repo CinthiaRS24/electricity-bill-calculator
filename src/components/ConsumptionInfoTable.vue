@@ -3,7 +3,7 @@ import type { HeaderItem } from '../model/Types';
 
 export default {
   props: {
-    desserts: {
+    calculatedData: {
       type: Array, // Tipo de datos esperados
       required: true // Si es obligatorio o no
     },
@@ -40,15 +40,15 @@ export default {
           ],
         },
         {
-          title: 'Kwats x días', align: 'center',
+          title: 'Kwatts x días', align: 'center',
           children: [
-            { title: '(entre 30)', value: 'kwats', align: 'center' },
+            { title: '(entre 30)', value: 'kwatts', align: 'center' },
           ],
         },
         {
-          title: 'Wats x días', align: 'center',
+          title: 'Watts x días', align: 'center',
           children: [
-            { title: 'x 1000', value: 'wats', align: 'center' },
+            { title: 'x 1000', value: 'watts', align: 'center' },
           ],
         },
       ];
@@ -56,11 +56,20 @@ export default {
   },
   methods: {
     daysUsed() {
-      const diferenciaEnMilisegundos = Number(new Date(this.endDate)) - Number(new Date(this.startDate));
-      const diferenciaEnDías = diferenciaEnMilisegundos / (1000 * 60 * 60 * 24);
-      console.log('diferenciaEnDías', diferenciaEnDías);
-      return diferenciaEnDías;
-    }
+      const differenceInMilliseconds = Number(new Date(this.endDate)) - Number(new Date(this.startDate));
+      const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
+      return differenceInDays;
+    },
+    initial() {
+      if (this.calculatedData) {
+        console.log('desserts', this.calculatedData);
+      } else {
+        console.log('desserts is undefined');
+      }
+    },
+  },
+  created() {
+    this.initial(); // Llama a la función initial() después de que se crea el componente
   }
   // data: () => ({
   //   headers: [
@@ -102,5 +111,5 @@ export default {
 </script>
 
 <template>
-  <v-data-table :headers="headers" :items="desserts" item-key="name" items-per-page="10"></v-data-table>
+  <v-data-table :headers="headers" :items="calculatedData" item-key="name" items-per-page="10"></v-data-table>
 </template>

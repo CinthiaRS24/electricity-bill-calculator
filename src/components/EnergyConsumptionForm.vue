@@ -30,8 +30,8 @@ export default {
                     start: "",
                     end: "",
                     difference: "",
-                    kwats: "",
-                    wats: 0,
+                    kwatts: "",
+                    watts: 0,
                 },
             ]
         }
@@ -66,16 +66,16 @@ export default {
                     start: value1.toFixed(2),
                     end: value2.toFixed(2),
                     difference: (value1 - value2).toFixed(2),
-                    kwats: ((value1 - value2) / 30).toFixed(2),
-                    wats: index === lastIndex ? 0 : Math.round(((value1 - value2) / 30 * 1000)),
+                    kwatts: ((value1 - value2) / 30).toFixed(2),
+                    watts: index === lastIndex ? 0 : Math.round(((value1 - value2) / 30 * 1000)),
                 };
             });
         },
-        calculateWats(value: { wats: number }[]) {
-            const sumaWats = value.slice(1, -1).reduce((acc, obj) => acc + obj.wats, 0);
-            const primerElementoWats = value[0].wats;
-            const diferencia = primerElementoWats - sumaWats;
-            value[value.length - 1].wats = Math.round(diferencia);
+        calculateWats(value: { watts: number }[]) {
+            const totalWatts = value.slice(1, -1).reduce((acc, obj) => acc + obj.watts, 0);
+            const firstElementWatts = value[0].watts;
+            const difference = firstElementWatts - totalWatts;
+            value[value.length - 1].watts = Math.round(difference);
         },
         updateData(value: any[]) {
             this.data = value;
@@ -99,31 +99,30 @@ export default {
                                     <input type="date" v-model="d.date" />
                                 </div>
 
-                                <v-responsive max-width="80%">
+                                <v-col cols="9">
                                     <v-text-field v-model.number="d.suma" type="number" label="Suma" />
-                                </v-responsive>
+                                </v-col>
 
-                                <v-responsive max-width="80%">
+                                <v-col cols="9">
                                     <v-text-field v-model.number="d.quinto" type="number" label="5to piso" />
-                                </v-responsive>
+                                </v-col>
 
-                                <v-responsive max-width="80%">
+                                <v-col cols="9">
                                     <v-text-field v-model.number="d.cuarto" type="number" label="4to piso" />
-                                </v-responsive>
+                                </v-col>
 
-                                <v-responsive max-width="80%">
+                                <v-col cols="9">
                                     <v-text-field v-model.number="d.tercero" type="number" label="3er piso" />
-                                </v-responsive>
+                                </v-col>
 
-                                <v-responsive max-width="80%">
+                                <v-col cols="9">
                                     <v-text-field v-model.number="d.segundo" type="number" label="2do piso" />
-                                </v-responsive>
+                                </v-col>
 
-                                <v-responsive max-width="80%">
+                                <v-col cols="9">
                                     <v-text-field v-model.number="d.primero" type="number" label="1er piso + tanque"
                                         disabled />
-                                </v-responsive>
-
+                                </v-col>
                             </div>
                         </v-col>
                     </v-row>
