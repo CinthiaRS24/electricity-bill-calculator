@@ -60,17 +60,7 @@ export default {
       const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
       return differenceInDays;
     },
-    initial() {
-      if (this.calculatedData) {
-        console.log('desserts', this.calculatedData);
-      } else {
-        console.log('desserts is undefined');
-      }
-    },
   },
-  created() {
-    this.initial(); // Llama a la función initial() después de que se crea el componente
-  }
   // data: () => ({
   //   headers: [
   //     {
@@ -111,5 +101,5 @@ export default {
 </script>
 
 <template>
-  <v-data-table :headers="headers" :items="calculatedData" item-key="name" items-per-page="10"></v-data-table>
+  <v-data-table :headers="headers" :items="calculatedData" item-key="name" items-per-page="10" />
 </template>

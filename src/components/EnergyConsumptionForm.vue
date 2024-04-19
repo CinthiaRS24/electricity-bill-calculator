@@ -33,11 +33,24 @@ export default {
                     kwatts: "",
                     watts: 0,
                 },
+            ],
+            building: [
+                "Lote B",
+                "Lote C"
+            ],
+            floors: [
+                "suma",
+                "5to piso",
+                "4to piso",
+                "3er piso",
+                "2do piso",
+                "1er piso + tanque",
             ]
         }
     },
     computed: {
-        fullFields(): boolean {
+        // Returns true if all fields are filled to enable the calculate button
+        hasAllFieldsFilled(): boolean {
             return this.info.every((item: InfoItem) =>
                 Object.keys(item).every((key: string) =>
                     key === "primero" || (item[key] !== 0 && item.date !== "")
@@ -46,36 +59,40 @@ export default {
         }
     },
     methods: {
-        onClicker() {
+        onCalculateButtonClick() {
             const keys: string[] = Object.keys(this.info[0]).slice(1);
             const newValues = this.assignValuesByFloor(keys);
-            this.calculateWats(newValues);
+            this.calculateWatsToFirstFloor(newValues);
             this.updateData(newValues);
             this.$emit('calculated', { tableData: this.data, startDate: this.info[1].date, endDate: this.info[0].date });
         },
         assignValuesByFloor(keys: string[]) {
             return keys.map((floor: string, index: number) => {
-                const isFirstKey = index === 0;
                 const lastIndex = keys.length - 1;
+                const lastElement = index === lastIndex;
 
-                const value1 = Number(this.info[0][floor]);
-                const value2 = Number(this.info[1][floor]);
+                const previousBillConsumption = Number(this.info[0][floor]);
+                const currentBillConsumption = Number(this.info[1][floor]);
+                const billDifference = previousBillConsumption - currentBillConsumption;
 
                 return {
-                    title: isFirstKey ? floor + " + tanque" : floor,
-                    start: value1.toFixed(2),
-                    end: value2.toFixed(2),
-                    difference: (value1 - value2).toFixed(2),
-                    kwatts: ((value1 - value2) / 30).toFixed(2),
-                    watts: index === lastIndex ? 0 : Math.round(((value1 - value2) / 30 * 1000)),
+                    title: lastElement ? floor + " + tanque" : floor,
+                    start: previousBillConsumption.toFixed(2),
+                    end: currentBillConsumption.toFixed(2),
+                    difference: billDifference.toFixed(2),
+                    kwatts: (billDifference / 30).toFixed(2),
+                    watts: lastElement ? 0 : Math.round((billDifference / 30 * 1000)),
                 };
             });
         },
-        calculateWats(value: { watts: number }[]) {
-            const totalWatts = value.slice(1, -1).reduce((acc, obj) => acc + obj.watts, 0);
-            const firstElementWatts = value[0].watts;
-            const difference = firstElementWatts - totalWatts;
-            value[value.length - 1].watts = Math.round(difference);
+        calculateWatsToFirstFloor(value: { watts: number }[]) {
+            // First we will make a sum of the watts from the second to the fifth floor
+            // Then we will subtract the total watts minus the sum calculated in the previous step
+            // Finally, that difference will be the watts value of the first floor plus the tank
+            const totalWattsFromSecondToFifthFloor = value.slice(1, -1).reduce((acc, obj) => acc + obj.watts, 0);
+            const totalWatts = value[0].watts;
+            const totalWattsFirstFloorPlusTank = totalWatts - totalWattsFromSecondToFifthFloor;
+            value[value.length - 1].watts = Math.round(totalWattsFirstFloorPlusTank);
         },
         updateData(value: any[]) {
             this.data = value;
@@ -89,49 +106,26 @@ export default {
     <v-container style="display: flex; flex-direction: row;">
         <v-form style="margin: initial;">
             <v-container>
-                <v-select label="Select" :items="['Lote B', 'Lote C']" variant="outlined"></v-select>
+                <v-select label="Selecciona" :items="building" variant="outlined"></v-select>
                 <div class="info-container">
                     <v-row>
-                        <v-col v-for="(d, index) in info" :key="index" class="info-current">
-                            <div class="info">
-                                <div class="date">
-                                    <p>Date:</p>
+                        <v-col v-for="(d, index) in info" :key="index">
+                            <div>
+                                <div>
+                                    <p>Factura {{ index === 0 ? "anterior" : "actual" }}:</p>
                                     <input type="date" v-model="d.date" />
                                 </div>
 
-                                <v-col cols="9">
-                                    <v-text-field v-model.number="d.suma" type="number" label="Suma" />
-                                </v-col>
-
-                                <v-col cols="9">
-                                    <v-text-field v-model.number="d.quinto" type="number" label="5to piso" />
-                                </v-col>
-
-                                <v-col cols="9">
-                                    <v-text-field v-model.number="d.cuarto" type="number" label="4to piso" />
-                                </v-col>
-
-                                <v-col cols="9">
-                                    <v-text-field v-model.number="d.tercero" type="number" label="3er piso" />
-                                </v-col>
-
-                                <v-col cols="9">
-                                    <v-text-field v-model.number="d.segundo" type="number" label="2do piso" />
-                                </v-col>
-
-                                <v-col cols="9">
-                                    <v-text-field v-model.number="d.primero" type="number" label="1er piso + tanque"
-                                        disabled />
+                                <v-col v-for="(floor, index) in floors" :key="index" cols="9">
+                                    <v-text-field v-model.number="d.suma" type="number" :label="floor"
+                                        :disabled="index === floors.length - 1" />
                                 </v-col>
                             </div>
                         </v-col>
                     </v-row>
                 </div>
-                <div class="div-final">
-                    <!-- <div>
-                        Monto a pagar: <input v-model="number" />
-                    </div> -->
-                    <v-btn @click="onClicker" :disabled="!fullFields" variant="tonal">
+                <div>
+                    <v-btn @click="onCalculateButtonClick" :disabled="!hasAllFieldsFilled" variant="tonal">
                         Calcular
                     </v-btn>
                 </div>
