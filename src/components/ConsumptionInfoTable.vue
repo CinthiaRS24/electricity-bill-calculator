@@ -4,16 +4,16 @@ import type { HeaderItem } from '../model/Types';
 export default {
   props: {
     calculatedData: {
-      type: Array, // Tipo de datos esperados
-      required: true // Si es obligatorio o no
+      type: Array,
+      required: true
     },
     startDate: {
-      type: String, // Tipo de datos esperados
-      required: true // Si es obligatorio o no
+      type: String,
+      required: true
     },
     endDate: {
-      type: String, // Tipo de datos esperados
-      required: true // Si es obligatorio o no
+      type: String,
+      required: true
     }
   },
   computed: {
@@ -58,6 +58,8 @@ export default {
     daysUsed() {
       const differenceInMilliseconds = Number(new Date(this.endDate)) - Number(new Date(this.startDate));
       const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
+      console.log('calculatedData', this.calculatedData);
+      
       return differenceInDays;
     },
   },

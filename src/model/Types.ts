@@ -1,16 +1,19 @@
-export interface InfoItem {
+export interface InfoData {
     date: string;
-    suma: number;
-    quinto: number;
-    cuarto: number;
-    tercero: number;
-    segundo: number;
-    primero: number;
-    [key: string]: string | number;
+    floors: number[];
 }
 
 export interface HeaderItem {
     title: string;
     align?: 'start' | 'center' | 'end'; 
     children: { title: string; value: string; align: string }[];
+}
+
+export interface BillData {
+    title: string;
+    start: string;
+    end: string;
+    difference: string;
+    kwatts: string;
+    watts: number;
 }

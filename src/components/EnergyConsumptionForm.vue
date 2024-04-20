@@ -1,44 +1,18 @@
 <script lang="ts">
-import type { InfoItem } from "../model/Types"
+import type { InfoData } from "../model/Types"
 
 export default {
     data() {
         return {
             info: [
-                {
-                    date: "",
-                    suma: 0,
-                    quinto: 0,
-                    cuarto: 0,
-                    tercero: 0,
-                    segundo: 0,
-                    primero: 0,
-                },
-                {
-                    date: "",
-                    suma: 0,
-                    quinto: 0,
-                    cuarto: 0,
-                    tercero: 0,
-                    segundo: 0,
-                    primero: 0,
-                }
-            ] as InfoItem[],
-            data: [
-                {
-                    title: "",
-                    start: "",
-                    end: "",
-                    difference: "",
-                    kwatts: "",
-                    watts: 0,
-                },
-            ],
-            building: [
+                { date: "", floors: [0, 0, 0, 0, 0, 0] },
+                { date: "", floors: [0, 0, 0, 0, 0, 0] }
+            ] as InfoData[],
+            buildingOptions: [
                 "Lote B",
                 "Lote C"
             ],
-            floors: [
+            floorOptions: [
                 "suma",
                 "5to piso",
                 "4to piso",
@@ -51,32 +25,30 @@ export default {
     computed: {
         // Returns true if all fields are filled to enable the calculate button
         hasAllFieldsFilled(): boolean {
-            return this.info.every((item: InfoItem) =>
-                Object.keys(item).every((key: string) =>
-                    key === "primero" || (item[key] !== 0 && item.date !== "")
+            return this.info.every((item: InfoData) =>
+                item.floors.every((value: number, index: number) =>
+                    index === item.floors.length - 1 || (value !== 0 && item.date !== "")
                 )
             );
         }
     },
     methods: {
         onCalculateButtonClick() {
-            const keys: string[] = Object.keys(this.info[0]).slice(1);
-            const newValues = this.assignValuesByFloor(keys);
-            this.calculateWatsToFirstFloor(newValues);
-            this.updateData(newValues);
-            this.$emit('calculated', { tableData: this.data, startDate: this.info[1].date, endDate: this.info[0].date });
+            const newValues = this.assignValuesByFloor(this.floorOptions);
+            const billData = this.calculateWatsToFirstFloor(newValues);
+            this.$emit('calculated', { tableData: billData, startDate: this.info[1].date, endDate: this.info[0].date });
         },
-        assignValuesByFloor(keys: string[]) {
-            return keys.map((floor: string, index: number) => {
-                const lastIndex = keys.length - 1;
+        assignValuesByFloor(floorOptions: string[]) {
+            return floorOptions.map((floor: string, index: number) => {
+                const lastIndex = floorOptions.length - 1;
                 const lastElement = index === lastIndex;
 
-                const previousBillConsumption = Number(this.info[0][floor]);
-                const currentBillConsumption = Number(this.info[1][floor]);
+                const previousBillConsumption = Number(this.info[0].floors[index]);
+                const currentBillConsumption = Number(this.info[1].floors[index]);
                 const billDifference = previousBillConsumption - currentBillConsumption;
 
                 return {
-                    title: lastElement ? floor + " + tanque" : floor,
+                    title: floor,
                     start: previousBillConsumption.toFixed(2),
                     end: currentBillConsumption.toFixed(2),
                     difference: billDifference.toFixed(2),
@@ -93,10 +65,8 @@ export default {
             const totalWatts = value[0].watts;
             const totalWattsFirstFloorPlusTank = totalWatts - totalWattsFromSecondToFifthFloor;
             value[value.length - 1].watts = Math.round(totalWattsFirstFloorPlusTank);
+            return value;
         },
-        updateData(value: any[]) {
-            this.data = value;
-        }
     },
 }
 
@@ -106,7 +76,7 @@ export default {
     <v-container style="display: flex; flex-direction: row;">
         <v-form style="margin: initial;">
             <v-container>
-                <v-select label="Selecciona" :items="building" variant="outlined"></v-select>
+                <v-select label="Selecciona" :items="buildingOptions" variant="outlined"></v-select>
                 <div class="info-container">
                     <v-row>
                         <v-col v-for="(d, index) in info" :key="index">
@@ -116,9 +86,9 @@ export default {
                                     <input type="date" v-model="d.date" />
                                 </div>
 
-                                <v-col v-for="(floor, index) in floors" :key="index" cols="9">
-                                    <v-text-field v-model.number="d.suma" type="number" :label="floor"
-                                        :disabled="index === floors.length - 1" />
+                                <v-col v-for="(floor, index) in floorOptions" :key="index" cols="9">
+                                    <v-text-field v-model.number="d.floors[index]" type="number" :label="floor"
+                                        :disabled="index === floorOptions.length - 1" />
                                 </v-col>
                             </div>
                         </v-col>
