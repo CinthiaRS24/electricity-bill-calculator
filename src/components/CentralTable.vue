@@ -27,27 +27,20 @@ export default {
         FloorAndTankConsumption,
         TotalPaymentPerFloor
     },
-    data() {
-        return {
-            totalWatts: this.wattsPerDayData[0].watts,
-            firstFloorPlusTank: this.wattsPerDayData[this.wattsPerDayData.length - 1].watts,
-        }
-    },
     computed: {
+        totalWatts(): number {
+            return this.wattsPerDayData[0].watts;
+        },
+        firstFloorPlusTank(): number {
+            return this.wattsPerDayData[this.wattsPerDayData.length - 1].watts;
+        },
         constant(): number {
+            console.log('totalWatts', this.totalWatts);
+            
             return Number((this.totalPrice / this.totalWatts).toFixed(6));
         },
         firstFloor(): number {
             return this.firstFloorPlusTank - this.tank;
-        },
-        dataArray() {
-            let newArr = this.wattsPerDayData.slice(1, -1);
-            const firstFloor = { title: "1er piso", watts: this.firstFloor };
-            const tank = { title: "Tanque", watts: this.tank };
-            newArr = newArr.concat([firstFloor, tank])
-            console.log('newArr', newArr);
-            console.log('tfirstFloorPlusTankcompuuu', this.firstFloorPlusTank);
-            return newArr;
         },
         getPricePerFloorAndTank() {
             let dataByFloorAndTank = this.wattsPerDayData.slice(1, -1);
@@ -63,11 +56,12 @@ export default {
         },
         getTotalPricePerFloor() {
             const tankPricePerFloor = this.getPricePerFloorAndTank[this.getPricePerFloorAndTank.length - 1].price / 5;
-            const onlyNecessaryData = this.getPricePerFloorAndTank.map((element) => ({
+            let onlyNecessaryData = this.getPricePerFloorAndTank.map((element) => ({
                 title: element.title,
                 price: element.price,
-                totalPrice: element.price + tankPricePerFloor
+                totalPrice: element.price + (tankPricePerFloor)
             }))
+            onlyNecessaryData = onlyNecessaryData.slice(0, -1)
             return [tankPricePerFloor, onlyNecessaryData];
         }
     }
@@ -81,8 +75,7 @@ export default {
                 <FirstFloorConsumption :firstFloorPlusTank="firstFloorPlusTank" :tank="tank" :firstFloor="firstFloor" />
             </v-col>
             <v-col cols="6">
-                <ConstantCalculation :totalWatts="totalWatts" :totalPrice="totalPrice" :constant="constant"
-                    :firstFloor="firstFloor" />
+                <ConstantCalculation :totalWatts="totalWatts" :totalPrice="totalPrice" :constant="constant" />
             </v-col>
             <v-col cols="12">
                 <FloorAndTankConsumption :infoToTable="getPricePerFloorAndTank" :constant="constant" />

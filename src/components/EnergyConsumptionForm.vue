@@ -57,7 +57,7 @@ export default {
                     end: currentBillConsumption.toFixed(2),
                     difference: billDifference.toFixed(2),
                     kwatts: (billDifference / 30).toFixed(2),
-                    watts: lastElement ? 0 : Math.round((billDifference / 30 * 1000)),
+                    watts: lastElement ? 0 : Math.round(((Number(billDifference / 30).toFixed(2)) * 1000)),
                 };
             });
         },
