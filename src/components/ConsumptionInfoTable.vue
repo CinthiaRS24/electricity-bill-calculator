@@ -3,7 +3,7 @@ import type { HeaderItem } from '../model/Types';
 
 export default {
   props: {
-    calculatedData: {
+    wattsPerDayData: {
       type: Array,
       required: true
     },
@@ -14,6 +14,12 @@ export default {
     endDate: {
       type: String,
       required: true
+    }
+  },
+  data() {
+    return {
+      tank: 0 as Number,
+      totalPrice: 0 as Number
     }
   },
   computed: {
@@ -36,7 +42,7 @@ export default {
         {
           title: 'Días', align: 'center',
           children: [
-            { title: String(this.daysUsed()), value: 'difference', align: 'center', },
+            { title: String(this.getElapsedDays()), value: 'difference', align: 'center', },
           ],
         },
         {
@@ -52,56 +58,50 @@ export default {
           ],
         },
       ];
+    },
+    hasEmptyFields() {
+      return this.wattsPerDayData.length < 1 || this.tank === 0 || String(this.tank) === '' || this.totalPrice === 0 || String(this.totalPrice) === ''
     }
   },
   methods: {
-    daysUsed() {
+    getElapsedDays() {
       const differenceInMilliseconds = Number(new Date(this.endDate)) - Number(new Date(this.startDate));
       const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
-      console.log('calculatedData', this.calculatedData);
-      
       return differenceInDays;
     },
+    onCalculateButtonClick() {
+      this.$emit('secondCalculated', { tank: this.tank, totalPrice: this.totalPrice });
+    },
   },
-  // data: () => ({
-  //   headers: [
-  //     {
-  //       title: 'Detalle', align: 'center',
-  //       children: [
-  //         { title: 'corresponde a', value: 'title', align: 'center', },
-  //       ],
-  //     },
-  //     {
-  //       title: 'Fecha',
-  //       align: 'center',
-  //       children: [
-  //         { title: this.startDate, value: 'start' },
-  //         { title: 'fin', value: 'end' },
-  //       ],
-  //     },
-  //     {
-  //       title: 'Días', align: 'center',
-  //       children: [
-  //         { title: '30', value: 'difference', align: 'center', },
-  //       ],
-  //     },
-  //     {
-  //       title: 'Kwats x días', align: 'center',
-  //       children: [
-  //         { title: '(entre 30)', value: 'kwats', align: 'center' },
-  //       ],
-  //     },
-  //     {
-  //       title: 'Wats x días', align: 'center',
-  //       children: [
-  //         { title: 'x 1000', value: 'wats', align: 'center' },
-  //       ],
-  //     },
-  //   ],
-  // }),
 }
 </script>
 
 <template>
-  <v-data-table :headers="headers" :items="calculatedData" item-key="name" items-per-page="10" />
+  <v-data-table :headers="headers" :items="wattsPerDayData" item-key="name" items-per-page="10" />
+  <div>
+    <v-row class="container-inputs">
+      <v-col cols="4">
+        <v-text-field v-model.number="tank" type="number" label="Tanque" />
+      </v-col>
+      <v-col cols="4">
+        <v-text-field v-model.number="totalPrice" type="number" label="Monto S/" />
+      </v-col>
+    </v-row>
+    <v-btn @click="onCalculateButtonClick" :disabled="hasEmptyFields" variant="tonal" class="btn-calcular">
+      Calcular
+    </v-btn>
+  </div>
 </template>
+
+<style scoped>
+.container-inputs {
+  justify-content: space-around;
+  display: flex;
+  margin-top: 5%;
+}
+
+.btn-calcular {
+  margin: auto;
+  display: flex;
+}
+</style>

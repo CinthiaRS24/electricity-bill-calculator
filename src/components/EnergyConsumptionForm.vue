@@ -25,20 +25,24 @@ export default {
     computed: {
         // Returns true if all fields are filled to enable the calculate button
         hasAllFieldsFilled(): boolean {
+            // The last element of floors will not go through the conditions since its value will be filled automatically
             return this.info.every((item: InfoData) =>
-                item.floors.every((value: number, index: number) =>
-                    index === item.floors.length - 1 || (value !== 0 && item.date !== "")
-                )
+                item.floors.every((value: number, index: number) => {
+                    const indexLastElement = item.floors.length - 1;
+                    return index === indexLastElement || (value !== 0 && item.date !== "")
+                })
             );
         }
     },
     methods: {
         onCalculateButtonClick() {
-            const newValues = this.assignValuesByFloor(this.floorOptions);
-            const billData = this.calculateWatsToFirstFloor(newValues);
-            this.$emit('calculated', { tableData: billData, startDate: this.info[1].date, endDate: this.info[0].date });
+            const wattsPerDayPerFloor = this.calculateWattsPerDay(this.floorOptions);
+            const completeWattsPerDayData = this.calculateWatsToFirstFloor(wattsPerDayPerFloor);
+
+            this.$emit('calculated', { tableData: completeWattsPerDayData, startDate: this.info[1].date, endDate: this.info[0].date });
         },
-        assignValuesByFloor(floorOptions: string[]) {
+        calculateWattsPerDay(floorOptions: string[]) {
+            // Calculate watts consumed per day per floor, that will be shown in the first table, without taking into account the first floor plus tank
             return floorOptions.map((floor: string, index: number) => {
                 const lastIndex = floorOptions.length - 1;
                 const lastElement = index === lastIndex;
@@ -76,7 +80,7 @@ export default {
     <v-container style="display: flex; flex-direction: row;">
         <v-form style="margin: initial;">
             <v-container>
-                <v-select label="Selecciona" :items="buildingOptions" variant="outlined"></v-select>
+                <v-select label="Selecciona" :items="buildingOptions" variant="outlined" />
                 <div class="info-container">
                     <v-row>
                         <v-col v-for="(d, index) in info" :key="index">

@@ -1,27 +1,36 @@
 <script lang="ts">
 
-import ConsumptionForm from './components/EnergyConsumptionForm.vue';
-import InfoTable from './components/ConsumptionInfoTable.vue';
+import EnergyConsumptionForm from './components/EnergyConsumptionForm.vue';
+import ConsumptionInfoTable from './components/ConsumptionInfoTable.vue';
+import CentralTable from './components/CentralTable.vue';
 
 
 export default {
     components: {
-        ConsumptionForm,
-        InfoTable
+        EnergyConsumptionForm,
+        ConsumptionInfoTable,
+        CentralTable
     },
     data() {
         return {
             tableData: [] as any[],
             startDate: "" as string,
             endDate: "" as string,
+            tank: 0 as number,
+            totalPrice: 0 as number,
         }
     },
-    emits: ["calculated"],
+    emits: ["calculated", "secondCalculated"],
     methods: {
-        updateData(payload: { tableData: any[], startDate: string, endDate: string }) {
+        updateStatusData(payload: { tableData: any[], startDate: string, endDate: string }) {
             this.tableData = payload.tableData;
             this.startDate = payload.startDate;
             this.endDate = payload.endDate;
+            console.log('this.tableData',this.tableData);
+        },
+        updateStatusData2(payload: { tank: number, totalPrice: number }) {
+            this.tank = payload.tank;
+            this.totalPrice = payload.totalPrice;
         }
     }
 }
@@ -32,11 +41,13 @@ export default {
     <v-container fluid>
         <v-row>
             <v-col cols="4">
-                <ConsumptionForm @calculated="updateData" />
+                <EnergyConsumptionForm @calculated="updateStatusData" />
             </v-col>
             <v-col cols="6">
-                <InfoTable :calculatedData="tableData" :endDate="endDate" :startDate="startDate" />
+                <ConsumptionInfoTable  @secondCalculated="updateStatusData2" :wattsPerDayData="tableData" :endDate="endDate" :startDate="startDate" />
             </v-col>
         </v-row>
+        
+        <CentralTable v-if="tableData.length > 0" :tank="tank" :totalPrice="totalPrice" :wattsPerDayData="tableData" />
     </v-container>
 </template>
