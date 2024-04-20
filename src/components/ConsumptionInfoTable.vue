@@ -81,7 +81,7 @@ export default {
   <div>
     <v-row class="container-inputs">
       <v-col cols="4">
-        <v-text-field v-model.number="tank" type="number" label="Tanque" />
+        <v-text-field v-model.number="tank" type="number" label="Tanque (Watts por día)" />
       </v-col>
       <v-col cols="4">
         <v-text-field v-model.number="totalPrice" type="number" label="Monto S/" />

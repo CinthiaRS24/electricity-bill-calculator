@@ -13,36 +13,17 @@ export default {
             type: Number,
             required: true
         }
-    },
+    }
 }
 </script>
 
 <template>
     <v-col cols="10">
-        <p>Calculando el consumo dle primer piso</p>
-        <v-table>
-            <tbody>
-                <tr>
-                    <td>Tanque</td>
-                    <td>{{ tank }} watts x día</td>
-                </tr>
-                <tr>
-                    <td>1er piso + tanque</td>
-                    <td>{{ firstFloorPlusTank }}</td>
-                </tr>
-                <tr>
-                    <td>1er piso + tanque</td>
-                    <td>{{ firstFloorPlusTank }}</td>
-                </tr>
-                <tr>
-                    <td>1er piso</td>
-                    <td>{{ firstFloorPlusTank }} - {{ tank }}</td>
-                </tr>
-                <tr>
-                    <td>1er piso</td>
-                    <td>{{ firstFloor }}</td>
-                </tr>
-            </tbody>
-        </v-table>
+        <v-alert>
+            <v-alert-title>Calculando el consumo del primer piso</v-alert-title>
+            Como el <i>primer piso y tanque</i> consumen {{firstFloorPlusTank}}, 
+            y se está considerando {{tank}} Watts por día para el tanque, 
+            el primer piso está consumiendo {{firstFloor}} Watts.
+        </v-alert>
     </v-col>
 </template>
