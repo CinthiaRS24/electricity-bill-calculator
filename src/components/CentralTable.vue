@@ -1,23 +1,22 @@
 <script lang="ts">
-import type { PropType } from 'vue';
 import FirstFloorConsumption from "./tables/FirstFloorConsumption.vue";
 import ConstantCalculation from "./tables/ConstantCalculation.vue";
 import FloorAndTankConsumption from "./tables/FloorAndTankConsumption.vue";
 import TotalPaymentPerFloor from "./tables/TotalPaymentPerFloor.vue";
-
+import type {TableRowItem} from "../model/Types"
 
 export default {
     props: {
-        wattsPerDayData: {
-            type: Array as PropType<any[]>,
+        tableItems: {
+            type: Array <TableRowItem>,
             required: true
         },
         tank: {
-            type: Number as PropType<number>,
+            type: Number,
             required: true
         },
         totalPrice: {
-            type: Number as PropType<number>,
+            type: Number,
             required: true
         },
     },
@@ -29,60 +28,79 @@ export default {
     },
     computed: {
         totalWatts(): number {
-            return this.wattsPerDayData[0].watts;
+            return this.tableItems[0].wattsPerDay;
         },
         firstFloorPlusTank(): number {
-            return this.wattsPerDayData[this.wattsPerDayData.length - 1].watts;
+            return this.tableItems[this.tableItems.length - 1].wattsPerDay;
         },
         constant(): number {
-            console.log('totalWatts', this.totalWatts);
-            
             return Number((this.totalPrice / this.totalWatts).toFixed(6));
         },
         firstFloor(): number {
             return this.firstFloorPlusTank - this.tank;
         },
-        getPricePerFloorAndTank() {
-            let dataByFloorAndTank = this.wattsPerDayData.slice(1, -1);
-            const firstFloor = { title: "1er piso", watts: this.firstFloor };
-            const tank = { title: "Tanque", watts: this.tank };
-            dataByFloorAndTank = dataByFloorAndTank.concat([firstFloor, tank])
-            const onlyNecessaryData = dataByFloorAndTank.map((element) => ({
+        pricePerFloorAndTank() {
+            let dataByFloorAndTank = this.tableItems.slice(1, -1);
+            const firstFloor = { 
+                title: "1er piso", 
+                watts: this.firstFloor,
+                price: this.firstFloor * this.constant
+            };
+            const tank = { 
+                title: "Tanque", 
+                watts: this.tank,
+                price: this.tank * this.constant
+            };
+
+            let onlyNecessaryData = dataByFloorAndTank.map((element) => ({
                 title: element.title,
-                watts: element.watts,
-                price: element.watts * this.constant
-            }))
+                watts: element.wattsPerDay,
+                price: element.wattsPerDay * this.constant
+            }));
+            
+            onlyNecessaryData = onlyNecessaryData.concat([firstFloor, tank]);
+
             return onlyNecessaryData;
         },
-        getTotalPricePerFloor() {
-            const tankPricePerFloor = this.getPricePerFloorAndTank[this.getPricePerFloorAndTank.length - 1].price / 5;
-            let onlyNecessaryData = this.getPricePerFloorAndTank.map((element) => ({
+        tankPricePerFloor() {
+            return this.pricePerFloorAndTank[this.pricePerFloorAndTank.length - 1].price / 5;
+        },
+        totalPricePerFloor() {
+            let onlyNecessaryData = this.pricePerFloorAndTank.map((element) => ({
                 title: element.title,
                 price: element.price,
-                totalPrice: element.price + (tankPricePerFloor)
+                totalPrice: element.price + (this.tankPricePerFloor)
             }))
             onlyNecessaryData = onlyNecessaryData.slice(0, -1)
-            return [tankPricePerFloor, onlyNecessaryData];
+            return onlyNecessaryData;
         }
     }
 }
 </script>
 
 <template>
-    <v-container>
+    <v-container fluid>
         <v-row>
-            <v-col cols="6">
-                <FirstFloorConsumption :firstFloorPlusTank="firstFloorPlusTank" :tank="tank" :firstFloor="firstFloor" />
+            <v-col md="6" cols="12">
+                <FirstFloorConsumption
+                    :firstFloorPlusTank="firstFloorPlusTank"
+                    :tank="tank"
+                    :firstFloor="firstFloor" />
             </v-col>
-            <v-col cols="6">
-                <ConstantCalculation :totalWatts="totalWatts" :totalPrice="totalPrice" :constant="constant" />
-            </v-col>
-            <v-col cols="12">
-                <FloorAndTankConsumption :infoToTable="getPricePerFloorAndTank" :constant="constant" />
-            </v-col>
-            <v-col cols="12">
-                <TotalPaymentPerFloor :infoToTable="getTotalPricePerFloor" />
+            <v-col md="6" cols="12">
+                <ConstantCalculation
+                    :totalWatts="totalWatts"
+                    :totalPrice="totalPrice"
+                    :constant="constant" />
             </v-col>
         </v-row>
     </v-container>
+
+    <FloorAndTankConsumption
+        :infoToTable="pricePerFloorAndTank"
+        :constant="constant" />
+        
+    <TotalPaymentPerFloor
+        :infoToTable="totalPricePerFloor"
+        :tankPricePerFloor="tankPricePerFloor" />
 </template>

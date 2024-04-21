@@ -1,6 +1,7 @@
 export interface InfoData {
     date: string;
-    floors: number[];
+    floors: number[]; // Kwatts
+    buildingConsumption: number; // Kwatts
 }
 
 export interface HeaderItem {
@@ -9,13 +10,13 @@ export interface HeaderItem {
     children: { title: string; value: string; align: string }[];
 }
 
-export interface BillData {
+export interface TableRowItem {
     title: string; // floor
-    start: string; // consumption shown on the meter from the previous month
-    end: string;   // consumption shown on the meter from the current month
-    difference: string;  // difference in consumption from the previous month to the current month (start - end)
-    kwatts: string; // the difference is divided by the days elapsed (usually 30)
-    watts: number;  // kwatts x 1000 (watts consumed per day)
+    prev: string | undefined; // consumption shown on the meter from the previous month
+    current: string | undefined;   // consumption shown on the meter from the current month
+    kwattsDiff: string | undefined;  // difference in consumption from the previous month to the current month (start - end)
+    kwattsPerDay: string | undefined; // the difference is divided by the days elapsed (usually 30)
+    wattsPerDay: number;  // kwatts x 1000 (watts consumed per day)
 }
 
 export interface TableWithConstant {

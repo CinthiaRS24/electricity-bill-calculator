@@ -1,17 +1,21 @@
 <script lang="ts">
-import type { HeaderItem } from '../model/Types';
+import type { HeaderItem, TableRowItem } from '../model/Types';
 
 export default {
   props: {
-    wattsPerDayData: {
-      type: Array,
+    tableItems: {
+      type: Array<TableRowItem>,
       required: true
     },
-    startDate: {
+    prevDate: {
       type: String,
       required: true
     },
-    endDate: {
+    currentDate: {
+      type: String,
+      required: true
+    },
+    differenceDays: {
       type: String,
       required: true
     }
@@ -26,46 +30,51 @@ export default {
     headers(): HeaderItem[] {
       return [
         {
-          title: 'Detalle', align: 'center',
+          title: 'Detalle', 
+          align: 'center',
           children: [
-            { title: 'corresponde a', value: 'title', align: 'center', },
+            { title: 'corresponde a', value: 'title', align: 'center' },
           ],
         },
         {
           title: 'Fecha',
           align: 'center',
           children: [
-            { title: this.endDate, value: 'start', align: 'center' },
-            { title: this.startDate, value: 'end', align: 'center' },
+            { title: this.currentDate, value: 'current', align: 'center' },
+            { title: this.prevDate, value: 'prev', align: 'center' },
           ],
         },
         {
-          title: 'Días', align: 'center',
+          title: 'Días', 
+          align: 'center',
           children: [
-            { title: String(this.getElapsedDays()), value: 'difference', align: 'center', },
+            { title: this.differenceDays, value: 'kwattsDiff', align: 'center', },
           ],
         },
         {
-          title: 'Kwatts x días', align: 'center',
+          title: 'Kwatts x días', 
+          align: 'center',
           children: [
-            { title: '(entre 30)', value: 'kwatts', align: 'center' },
+            { title: `(entre ${this.differenceDays})`, value: 'kwattsPerDay', align: 'center' },
           ],
         },
         {
-          title: 'Watts x días', align: 'center',
+          title: 'Watts x días', 
+          align: 'center',
           children: [
-            { title: 'x 1000', value: 'watts', align: 'center' },
+            { title: 'x 1000', value: 'wattsPerDay', align: 'center' },
           ],
         },
       ];
     },
     hasEmptyFields() {
-      return this.wattsPerDayData.length < 1 || this.tank === 0 || String(this.tank) === '' || this.totalPrice === 0 || String(this.totalPrice) === ''
+      return this.tableItems.length < 1 || this.tank === 0 || String(this.tank) === '' || this.totalPrice === 0 || String(this.totalPrice) === ''
     }
   },
   methods: {
-    getElapsedDays() {
-      const differenceInMilliseconds = Number(new Date(this.endDate)) - Number(new Date(this.startDate));
+    getElapsedDays(): number {
+      if(!this.currentDate || !this.prevDate) return 0;
+      const differenceInMilliseconds = Number(new Date(this.currentDate)) - Number(new Date(this.prevDate));
       const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
       return differenceInDays;
     },
@@ -77,18 +86,27 @@ export default {
 </script>
 
 <template>
-  <v-data-table :headers="headers" :items="wattsPerDayData" item-key="name" items-per-page="10" />
+  <v-data-table 
+    :headers="headers" 
+    :items="tableItems" 
+    item-key="name">
+    <template #bottom></template>
+  </v-data-table>
+
   <div>
     <v-row class="container-inputs">
-      <v-col cols="4">
+      <v-col offset-lg="2" lg="4" md="6" cols="12">
         <v-text-field v-model.number="tank" type="number" label="Tanque (Watts por día)" />
       </v-col>
-      <v-col cols="4">
+      <v-col lg="4" md="6" cols="12">
         <v-text-field v-model.number="totalPrice" type="number" label="Monto S/" />
       </v-col>
     </v-row>
-    <v-btn @click="onCalculateButtonClick" :disabled="hasEmptyFields" variant="tonal" class="btn-calcular">
-      Calcular
+    <v-btn @click="onCalculateButtonClick" 
+      :disabled="hasEmptyFields" 
+      variant="tonal" 
+      class="btn-calcular">
+      Calcular total a pagar por piso
     </v-btn>
   </div>
 </template>

@@ -18,12 +18,10 @@ export default {
 </script>
 
 <template>
-    <v-col cols="10">
-        <v-alert>
-            <v-alert-title>Calculando el consumo del primer piso</v-alert-title>
-            Como el <i>primer piso y tanque</i> consumen {{firstFloorPlusTank}}, 
-            y se está considerando {{tank}} Watts por día para el tanque, 
-            el primer piso está consumiendo {{firstFloor}} Watts.
-        </v-alert>
-    </v-col>
+    <v-alert>
+        <v-alert-title>Calculando el consumo del primer piso</v-alert-title>
+        Como el <i>primer piso y tanque</i> consumen {{ firstFloorPlusTank }},
+        y se está considerando {{ tank }} Watts por día para el tanque,
+        el primer piso está consumiendo {{ firstFloor }} Watts.
+    </v-alert>
 </template>
