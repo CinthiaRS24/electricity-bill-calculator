@@ -76,11 +76,11 @@ export default {
                     currentConsumption,
                     prevConsumption                    
                 );
-            });;
+            });
 
             const firstFloorPlusTank = this.calcFirstFloorPlusTankWatts(
                 buildingConsumptionItem.wattsPerDay,
-                floorItems.map(floorItem => floorItem.wattsPerDay)
+                floorItems.map((floorItem: TableRowItem) => floorItem.wattsPerDay)
             )
             
             const firstFloorPlusTankItem = {
@@ -102,7 +102,7 @@ export default {
 
             return buildingwattsPerDay - totalWattsFromSecondToFifthFloor;
         },
-        updateStatusData2(payload: { tank: number, totalPrice: number }) {
+        updateTankAndTotalPrice(payload: { tank: number, totalPrice: number }) {
             this.tank = payload.tank;
             this.totalPrice = payload.totalPrice;
         },
@@ -117,7 +117,7 @@ export default {
 </script>
 
 <template>
-    <!-- TODO: Rename updateStatusData2 for a better name. Rename also the event names, to match the buttons. -->
+    <!-- TODO: Rename updateStatus2 for a better name. Rename also the event names, to match the buttons. -->
     <v-container fluid>
         <v-row class="mb-4">
             <v-col offset-md="1" offset="0" md="4" cols="12">
@@ -127,7 +127,7 @@ export default {
             </v-col>
             <v-col md="6" cols="12">
                 <ConsumptionInfoTable  
-                    @secondCalculated="updateStatusData2" 
+                    @changeValueOfTankAndTotalPrice="updateTankAndTotalPrice" 
                     :tableItems="tableItems" 
                     :currentDate="currentDate"
                     :prevDate="prevDate"

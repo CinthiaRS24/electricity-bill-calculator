@@ -26,6 +26,7 @@ export default {
       totalPrice: 0 as Number
     }
   },
+  emits: ["changeValueOfTankAndTotalPrice"],
   computed: {
     headers(): HeaderItem[] {
       return [
@@ -79,7 +80,7 @@ export default {
       return differenceInDays;
     },
     onCalculateButtonClick() {
-      this.$emit('secondCalculated', { tank: this.tank, totalPrice: this.totalPrice });
+      this.$emit('changeValueOfTankAndTotalPrice', { tank: this.tank, totalPrice: this.totalPrice });
     },
   },
 }
