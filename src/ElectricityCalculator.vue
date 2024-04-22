@@ -114,25 +114,7 @@ export default {
             const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
             return differenceInDays;
         },
-        // async fetchCities() {
-        //     try {
-        //         const citiesCol = collection(db, 'LOTE B');
-        //         const citySnapshot = await getDocs(citiesCol);
-        //         const citiesData = citySnapshot.docs.map(doc => ({
-        //             id: doc.id,
-        //             data: doc.data()
-        //         }));
-        //         console.log('citiesData', citiesData);
-
-        //         //this.cities = citySnapshot.docs.map(doc => doc.data());
-        //     } catch (error) {
-        //         console.error('Error fetching cities:', error);
-        //     }
-        // }
     },
-    // created() {
-    //     this.fetchCities();
-    // }
 }
 </script>
 

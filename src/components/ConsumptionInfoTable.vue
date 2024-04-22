@@ -22,7 +22,7 @@ export default {
   },
   data() {
     return {
-      tank: 0 as Number,
+      tank: 500 as Number,
       totalPrice: 0 as Number
     }
   },
@@ -46,21 +46,21 @@ export default {
           ],
         },
         {
-          title: 'Días',
+          title: 'Diferencia',
           align: 'center',
           children: [
-            { title: this.differenceDays, value: 'kwattsDiff', align: 'center', },
+            { title: `Días: ${this.differenceDays}`, value: 'kwattsDiff', align: 'center', },
           ],
         },
         {
-          title: 'Kwatts x días',
+          title: 'Kwatts x día',
           align: 'center',
           children: [
             { title: `(entre ${this.differenceDays})`, value: 'kwattsPerDay', align: 'center' },
           ],
         },
         {
-          title: 'Watts x días',
+          title: 'Watts x día',
           align: 'center',
           children: [
             { title: 'x 1000', value: 'wattsPerDay', align: 'center' },
