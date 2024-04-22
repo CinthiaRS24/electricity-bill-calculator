@@ -3,6 +3,8 @@ import type { InfoData, TableRowItem } from "./model/Types";
 import EnergyConsumptionForm from './components/EnergyConsumptionForm.vue';
 import ConsumptionInfoTable from './components/ConsumptionInfoTable.vue';
 import CentralTable from './components/CentralTable.vue';
+// import { collection, getDocs } from 'firebase/firestore';
+// import { db } from '@/firebase.js';
 
 export default {
     components: {
@@ -36,7 +38,7 @@ export default {
          */
         formatTableItem(
             label: string,
-            currentConsumption: number, 
+            currentConsumption: number,
             prevConsumption: number
         ): TableRowItem {
             const kwattsDifference = currentConsumption - prevConsumption;
@@ -74,7 +76,7 @@ export default {
                 return this.formatTableItem(
                     floorLabel,
                     currentConsumption,
-                    prevConsumption                    
+                    prevConsumption
                 );
             });
 
@@ -82,7 +84,7 @@ export default {
                 buildingConsumptionItem.wattsPerDay,
                 floorItems.map((floorItem: TableRowItem) => floorItem.wattsPerDay)
             )
-            
+
             const firstFloorPlusTankItem = {
                 title: '1er piso + Tanque',
                 prev: "",
@@ -107,12 +109,30 @@ export default {
             this.totalPrice = payload.totalPrice;
         },
         getElapsedDays(): number {
-            if(!this.currentDate || !this.prevDate) return 0;
+            if (!this.currentDate || !this.prevDate) return 0;
             const differenceInMilliseconds = Number(new Date(this.currentDate)) - Number(new Date(this.prevDate));
             const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
             return differenceInDays;
         },
-    }
+        // async fetchCities() {
+        //     try {
+        //         const citiesCol = collection(db, 'LOTE B');
+        //         const citySnapshot = await getDocs(citiesCol);
+        //         const citiesData = citySnapshot.docs.map(doc => ({
+        //             id: doc.id,
+        //             data: doc.data()
+        //         }));
+        //         console.log('citiesData', citiesData);
+
+        //         //this.cities = citySnapshot.docs.map(doc => doc.data());
+        //     } catch (error) {
+        //         console.error('Error fetching cities:', error);
+        //     }
+        // }
+    },
+    // created() {
+    //     this.fetchCities();
+    // }
 }
 </script>
 
@@ -121,24 +141,14 @@ export default {
     <v-container fluid>
         <v-row class="mb-4">
             <v-col offset-md="1" offset="0" md="4" cols="12">
-                <EnergyConsumptionForm 
-                    :floorLabels="floorLabels"
-                    @calculate="calcAndFillTable" />
+                <EnergyConsumptionForm :floorLabels="floorLabels" @calculate="calcAndFillTable" />
             </v-col>
             <v-col md="6" cols="12">
-                <ConsumptionInfoTable  
-                    @changeValueOfTankAndTotalPrice="updateTankAndTotalPrice" 
-                    :tableItems="tableItems" 
-                    :currentDate="currentDate"
-                    :prevDate="prevDate"
-                    :differenceDays="differenceDays" />
+                <ConsumptionInfoTable @changeValueOfTankAndTotalPrice="updateTankAndTotalPrice" :tableItems="tableItems"
+                    :currentDate="currentDate" :prevDate="prevDate" :differenceDays="differenceDays" />
             </v-col>
         </v-row>
-        
-        <CentralTable 
-            v-if="tableItems.length > 0" 
-            :tank="tank" 
-            :totalPrice="totalPrice" 
-            :tableItems="tableItems" />
+
+        <CentralTable v-if="tableItems.length > 0" :tank="tank" :totalPrice="totalPrice" :tableItems="tableItems" />
     </v-container>
 </template>

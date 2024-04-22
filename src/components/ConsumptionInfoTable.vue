@@ -31,7 +31,7 @@ export default {
     headers(): HeaderItem[] {
       return [
         {
-          title: 'Detalle', 
+          title: 'Detalle',
           align: 'center',
           children: [
             { title: 'corresponde a', value: 'title', align: 'center' },
@@ -46,21 +46,21 @@ export default {
           ],
         },
         {
-          title: 'Días', 
+          title: 'Días',
           align: 'center',
           children: [
             { title: this.differenceDays, value: 'kwattsDiff', align: 'center', },
           ],
         },
         {
-          title: 'Kwatts x días', 
+          title: 'Kwatts x días',
           align: 'center',
           children: [
             { title: `(entre ${this.differenceDays})`, value: 'kwattsPerDay', align: 'center' },
           ],
         },
         {
-          title: 'Watts x días', 
+          title: 'Watts x días',
           align: 'center',
           children: [
             { title: 'x 1000', value: 'wattsPerDay', align: 'center' },
@@ -74,7 +74,7 @@ export default {
   },
   methods: {
     getElapsedDays(): number {
-      if(!this.currentDate || !this.prevDate) return 0;
+      if (!this.currentDate || !this.prevDate) return 0;
       const differenceInMilliseconds = Number(new Date(this.currentDate)) - Number(new Date(this.prevDate));
       const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
       return differenceInDays;
@@ -87,10 +87,7 @@ export default {
 </script>
 
 <template>
-  <v-data-table 
-    :headers="headers" 
-    :items="tableItems" 
-    item-key="name">
+  <v-data-table :headers="headers" :items="tableItems" item-key="name">
     <template #bottom></template>
   </v-data-table>
 
@@ -103,10 +100,7 @@ export default {
         <v-text-field v-model.number="totalPrice" type="number" label="Monto S/" />
       </v-col>
     </v-row>
-    <v-btn @click="onCalculateButtonClick" 
-      :disabled="hasEmptyFields" 
-      variant="tonal" 
-      class="btn-calcular">
+    <v-btn @click="onCalculateButtonClick" :disabled="hasEmptyFields" variant="tonal" class="btn-calcular">
       Calcular total a pagar por piso
     </v-btn>
   </div>
