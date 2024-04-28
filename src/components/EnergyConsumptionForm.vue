@@ -4,6 +4,7 @@ import '@mdi/font/css/materialdesignicons.css';
 // @ts-ignore
 import { db } from "@/firebase.js";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { convertDate } from '../utils/utilityMethods';
 
 export default {
     data() {
@@ -60,7 +61,7 @@ export default {
             if (!infoItem.date) return;
 
             // Get Firebase document based on date
-            const docRef = doc(db, this.selectedBuilding, this.convertDate(infoItem.date));
+            const docRef = doc(db, this.selectedBuilding, convertDate(infoItem.date));
             const docSnap = await getDoc(docRef);
 
             if (docSnap.exists()) {
@@ -112,7 +113,7 @@ export default {
                 const collectionName = this.selectedBuilding;
 
                 this.info.map(async (info: InfoData) => {
-                    const documentId = this.convertDate(info.date);
+                    const documentId = convertDate(info.date);
                     const docRef = doc(db, collectionName, documentId);
 
                     // If the document already exists, we exit the function
@@ -142,13 +143,6 @@ export default {
                 console.error("Error al guardar datos en la colección personalizada:", error);
             }
         },
-        convertDate(originalDate: string) {
-            const parsedDate = new Date(originalDate);
-            const day = parsedDate.getUTCDate().toString().padStart(2, '0');
-            const month = (parsedDate.getUTCMonth() + 1).toString().padStart(2, '0');
-            const year = parsedDate.getFullYear().toString();
-            return day + month + year;
-        }
     },
     watch: {
         selectedBuilding: {

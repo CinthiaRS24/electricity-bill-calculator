@@ -3,6 +3,7 @@ import type { InfoData, TableRowItem } from "./model/Types";
 import EnergyConsumptionForm from './components/EnergyConsumptionForm.vue';
 import ConsumptionInfoTable from './components/ConsumptionInfoTable.vue';
 import CentralTable from './components/CentralTable.vue';
+import { roundTo2Decimals, getElapsedDays } from './utils/utilityMethods';
 
 export default {
     components: {
@@ -27,9 +28,6 @@ export default {
         }
     },
     methods: {
-        roundTo2Decimals(num: number) {
-            return Math.round(num * 100) / 100;
-        },
         /**
          * In order to generate a table item, we need the prev and current consumption.
          * It works for floors and the total building consumptions.
@@ -40,7 +38,7 @@ export default {
             prevConsumption: number
         ): TableRowItem {
             const kwattsDifference = currentConsumption - prevConsumption;
-            const kwattsPerDay = this.roundTo2Decimals(kwattsDifference / Number(this.differenceDays));
+            const kwattsPerDay = roundTo2Decimals(kwattsDifference / Number(this.differenceDays));
             const wattsPerDay = Math.round(kwattsPerDay * 1000);
 
             return {
@@ -55,7 +53,7 @@ export default {
         calcAndFillTable(info: InfoData[]) {
             this.currentDate = info[0].date;
             this.prevDate = info[1].date;
-            this.differenceDays = String(this.getElapsedDays());
+            this.differenceDays = String(getElapsedDays(this.currentDate, this.prevDate));
 
             const currentBuildingConsumption = info[0].buildingConsumption;
             const prevBuildingConsumption = info[1].buildingConsumption;
@@ -105,12 +103,6 @@ export default {
         updateTankAndTotalPrice(payload: { tank: number, totalPrice: number }) {
             this.tank = payload.tank;
             this.totalPrice = payload.totalPrice;
-        },
-        getElapsedDays(): number {
-            if (!this.currentDate || !this.prevDate) return 0;
-            const differenceInMilliseconds = Number(new Date(this.currentDate)) - Number(new Date(this.prevDate));
-            const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
-            return differenceInDays;
         },
     },
 }

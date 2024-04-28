@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { FinalArray } from '@/model/Types';
+import type { FinalArray } from '../../model/Types';
 
 export default {
     props: {
