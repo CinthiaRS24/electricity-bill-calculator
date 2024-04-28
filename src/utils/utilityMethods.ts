@@ -2,7 +2,7 @@ export function roundTo2Decimals(num: number): number {
     return Math.round(num * 100) / 100;
 }
 
-export function getElapsedDays(currentDate, prevDate): number {
+export function getElapsedDays(currentDate: string, prevDate: string) {
     if (!currentDate || !prevDate) return 0;
     const differenceInMilliseconds = Number(new Date(currentDate)) - Number(new Date(prevDate));
     const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
