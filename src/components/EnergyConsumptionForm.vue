@@ -2,7 +2,7 @@
 import type { InfoData } from "../model/Types";
 import '@mdi/font/css/materialdesignicons.css';
 // @ts-ignore
-import { db } from "@/firebase.js";
+import { db } from "../firebase.js";
 import { doc, getDoc } from "firebase/firestore";
 import { convertDate, savePrevAndCurrentDataToTable, saveDataBasedOnDays } from '../utils/utilityMethods';
 

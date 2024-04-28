@@ -19,7 +19,7 @@ export function convertDate(originalDate: string) {
 
 
 // Methods to save data in firebase
-import { db } from "@/firebase.js";
+import { db } from "../firebase.js";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import type { InfoData } from "../model/Types";
 
