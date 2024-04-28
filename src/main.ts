@@ -1,6 +1,7 @@
 // import './assets/main.css'
 
 import { createApp } from 'vue';
+import { aliases, mdi } from 'vuetify/iconsets/mdi'
 // import { createPinia } from 'pinia'
 
 import 'vuetify/styles'
@@ -16,7 +17,11 @@ const vuetify = createVuetify({
       defaultTheme: 'dark'
     },
     icons: {
-      iconfont: 'mdiSvg' as Iconfont, // Usa MDI como conjunto de iconos
+      defaultSet: 'mdi',
+      aliases,
+      sets: {
+        mdi,
+      },
     },
   })
 
