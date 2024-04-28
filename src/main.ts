@@ -16,8 +16,8 @@ const vuetify = createVuetify({
       defaultTheme: 'dark'
     },
     icons: {
-      defaultSet: 'mdiSvg', // Utiliza MDI como conjunto de iconos predeterminado
-  },
+      iconfont: 'mdiSvg' as Iconfont, // Usa MDI como conjunto de iconos
+    },
   })
 
 import ElectricityCalculator from './ElectricityCalculator.vue'
