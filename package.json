@@ -11,6 +11,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
     "firebase": "^10.11.0",
     "pinia": "^2.1.7",
     "vue": "^3.3.4",

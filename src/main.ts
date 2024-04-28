@@ -1,6 +1,6 @@
 // import './assets/main.css'
 
-import { createApp } from 'vue'
+import { createApp } from 'vue';
 // import { createPinia } from 'pinia'
 
 import 'vuetify/styles'
@@ -14,7 +14,10 @@ const vuetify = createVuetify({
     directives,
     theme: {
       defaultTheme: 'dark'
-    }
+    },
+    icons: {
+      iconfont: 'mdiSvg', // Usa MDI como conjunto de iconos
+    },
   })
 
 import ElectricityCalculator from './ElectricityCalculator.vue'

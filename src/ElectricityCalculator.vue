@@ -3,8 +3,6 @@ import type { InfoData, TableRowItem } from "./model/Types";
 import EnergyConsumptionForm from './components/EnergyConsumptionForm.vue';
 import ConsumptionInfoTable from './components/ConsumptionInfoTable.vue';
 import CentralTable from './components/CentralTable.vue';
-// import { collection, getDocs } from 'firebase/firestore';
-// import { db } from '@/firebase.js';
 
 export default {
     components: {
@@ -25,7 +23,7 @@ export default {
                 "4to piso",
                 "3er piso",
                 "2do piso"
-            ] as string[]
+            ] as string[],
         }
     },
     methods: {
@@ -123,11 +121,17 @@ export default {
     <v-container fluid>
         <v-row class="mb-4">
             <v-col offset-md="1" offset="0" md="4" cols="12">
-                <EnergyConsumptionForm :floorLabels="floorLabels" @calculate="calcAndFillTable" />
+                <EnergyConsumptionForm
+                    :floorLabels="floorLabels"
+                    @calculate="calcAndFillTable" />
             </v-col>
             <v-col md="6" cols="12">
-                <ConsumptionInfoTable @changeValueOfTankAndTotalPrice="updateTankAndTotalPrice" :tableItems="tableItems"
-                    :currentDate="currentDate" :prevDate="prevDate" :differenceDays="differenceDays" />
+                <ConsumptionInfoTable
+                    @changeValueOfTankAndTotalPrice="updateTankAndTotalPrice"
+                    :tableItems="tableItems"
+                    :currentDate="currentDate"
+                    :prevDate="prevDate"
+                    :differenceDays="differenceDays" />
             </v-col>
         </v-row>
 

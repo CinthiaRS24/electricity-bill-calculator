@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { InfoData } from "../model/Types";
+import '@mdi/font/css/materialdesignicons.css';
 // @ts-ignore
 import { db } from "@/firebase.js";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -12,7 +13,10 @@ export default {
                 "LOTE B",
                 "LOTE C"
             ],
-            selectedBuilding: "LOTE B" as string
+            selectedBuilding: "LOTE B" as string,
+            snackbar: false,
+            text: '',
+            timeout: 5000,
         }
     },
     props: {
@@ -114,6 +118,8 @@ export default {
                     // If the document already exists, we exit the function
                     const docSnap = await getDoc(docRef);
                     if (docSnap.exists()) {
+                        this.text = "Ya existe información guardada en las fechas selecciondas"
+                        this.snackbar = true;
                         console.log("El documento ya existe en la colección personalizada.");
                         return;
                     }
@@ -128,6 +134,8 @@ export default {
                     };
                     await setDoc(docRef, data);
 
+                    this.text = "Los datos han sido guardados exitosamente"
+                    this.snackbar = true;
                     console.log("Datos guardados correctamente en la colección personalizada.");
                 })
             } catch (error) {
@@ -135,8 +143,6 @@ export default {
             }
         },
         convertDate(originalDate: string) {
-            console.log('originalDate', originalDate);
-
             const parsedDate = new Date(originalDate);
             const day = parsedDate.getUTCDate().toString().padStart(2, '0');
             const month = (parsedDate.getUTCMonth() + 1).toString().padStart(2, '0');
@@ -162,7 +168,9 @@ export default {
                         v-model="selectedBuilding" />
                 </v-col>
                 <v-col cols="3">
-                    <v-btn variant="tonal" @click="saveDataInFirebase">
+                    <v-btn
+                        variant="tonal"
+                        @click="saveDataInFirebase">
                         Guardar
                     </v-btn>
                 </v-col>
@@ -179,9 +187,28 @@ export default {
                     </template>
                 </v-col>
             </v-row>
-            <v-btn @click="onCalculateButtonClick" :disabled="!hasAllFieldsFilled" variant="tonal">
+            <v-btn
+                @click="onCalculateButtonClick"
+                :disabled="!hasAllFieldsFilled"
+                variant="tonal">
                 Calcular watts por día
             </v-btn>
         </v-form>
     </v-card>
+    
+    <v-snackbar
+        v-model="snackbar"
+        :timeout="timeout"
+        color="deep-purple-accent-4"
+        location="top">
+        {{ text }}
+        <template v-slot:actions>
+            <v-btn
+                color="white"
+                variant="text"
+                @click="snackbar = false">
+                <v-icon dark large>mdi-close</v-icon>
+            </v-btn>
+        </template>
+    </v-snackbar>
 </template>
