@@ -3,8 +3,8 @@ import type { InfoData } from "../model/Types";
 import '@mdi/font/css/materialdesignicons.css';
 // @ts-ignore
 import { db } from "@/firebase.js";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { convertDate } from '../utils/utilityMethods';
+import { doc, getDoc } from "firebase/firestore";
+import { convertDate, savePrevAndCurrentDataToTable, saveDataBasedOnDays } from '../utils/utilityMethods';
 
 export default {
     data() {
@@ -79,69 +79,15 @@ export default {
         onCalculateButtonClick() {
             this.$emit('calculate', this.info);
         },
+        setSnackbar(value: boolean) {
+            this.snackbar = value;
+        },
+        setText(value: string) {
+            this.text = value;
+        },
         async saveDataInFirebase() {
-            this.savePrevAndCurrentDataToTable();
-            this.saveDataBasedOnDays();
-        },
-        async savePrevAndCurrentDataToTable() {
-            try {
-                const docRef = doc(db, "LAST BILL", this.selectedBuilding);
-
-                // Build the data object to save
-                const data = {
-                    currentDate: {
-                        date: this.info[0].date,
-                        buildingConsumption: this.info[0].buildingConsumption,
-                        floors: this.info[0].floors
-                    },
-                    prevDate: {
-                        date: this.info[1].date,
-                        buildingConsumption: this.info[1].buildingConsumption,
-                        floors: this.info[1].floors
-                    }
-                };
-
-                await setDoc(docRef, data);
-
-                console.log("Datos guardados correctamente en Firebase.");
-            } catch (error) {
-                console.error("Error al guardar datos en Firebase:", error);
-            }
-        },
-        async saveDataBasedOnDays() {
-            try {
-                const collectionName = this.selectedBuilding;
-
-                this.info.map(async (info: InfoData) => {
-                    const documentId = convertDate(info.date);
-                    const docRef = doc(db, collectionName, documentId);
-
-                    // If the document already exists, we exit the function
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists()) {
-                        this.text = "Ya existe información guardada en las fechas selecciondas"
-                        this.snackbar = true;
-                        console.log("El documento ya existe en la colección personalizada.");
-                        return;
-                    }
-
-                    // If the document does not exist, we will save the data
-                    const data = {
-                        "consumo total": info.buildingConsumption,
-                        "5to piso": info.floors[0],
-                        "4to piso": info.floors[1],
-                        "3er piso": info.floors[2],
-                        "2do piso": info.floors[3],
-                    };
-                    await setDoc(docRef, data);
-
-                    this.text = "Los datos han sido guardados exitosamente"
-                    this.snackbar = true;
-                    console.log("Datos guardados correctamente en la colección personalizada.");
-                })
-            } catch (error) {
-                console.error("Error al guardar datos en la colección personalizada:", error);
-            }
+            savePrevAndCurrentDataToTable(this.selectedBuilding, this.info);
+            saveDataBasedOnDays(this.selectedBuilding, this.info, this.setSnackbar, this.setText);
         },
     },
     watch: {
