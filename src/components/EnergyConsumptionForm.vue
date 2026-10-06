@@ -1,154 +1,248 @@
 <script lang="ts">
+import type { PropType } from 'vue';
 import type { InfoData } from "../model/Types";
 import '@mdi/font/css/materialdesignicons.css';
-// @ts-ignore
-import { db } from "../firebase.js";
-import { doc, getDoc } from "firebase/firestore";
-import { convertDate, savePrevAndCurrentDataToTable, saveDataBasedOnDays } from '../utils/utilityMethods';
+import { parseDecimalInput } from '../utils/utilityMethods';
 
 export default {
-    data() {
-        return {
-            info: [] as InfoData[],
-            buildingOptions: [
-                "LOTE B",
-                "LOTE C"
-            ],
-            selectedBuilding: "LOTE B" as string,
-            snackbar: false,
-            text: '',
-            timeout: 5000,
-        }
-    },
     props: {
         floorLabels: {
-            type: Array<string>,
+            type: Array as PropType<string[]>,
             required: true
+        },
+        /**
+         * Owned by the parent view: [current bill, previous bill]. Nested properties are
+         * written in place, which is what keeps the calculation reacting while typing.
+         */
+        info: {
+            type: Array as PropType<InfoData[]>,
+            required: true
+        },
+        /**
+         * The parent bumps this after loading or clearing data so the text shown in the
+         * fields is rebuilt from `info` instead of from what was typed.
+         */
+        syncToken: {
+            type: Number,
+            default: 0
         }
     },
-    computed: {
-        // If all fields are filled -> enable the calculate button
-        hasAllFieldsFilled(): boolean {
-            return this.info.every((item: InfoData) =>
-                item.date !== "" && item.buildingConsumption !== 0 && item.floors.every((value: number) => {
-                    return value !== 0
-                })
-            );
+    emits: ['pickDate'],
+    data() {
+        return {
+            // What the user literally typed, so a half written "1558." is not rewritten.
+            raw: {} as Record<string, string>,
         }
     },
     methods: {
-        async fetchInitialData() {
-            this.info = [];
-            try {
-                const documentId = this.selectedBuilding;
-                const docRef = doc(db, "LAST BILL", documentId);
-                const docSnap = await getDoc(docRef);
+        rawKey(index: number, field: string): string {
+            return `${index}|${field}`;
+        },
+        syncRawFromInfo() {
+            const raw: Record<string, string> = {};
+            const asText = (value: number) => (value === 0 ? '' : String(value));
 
-                if (docSnap.exists()) {
-                    // If the document exists, you can access its data using docSnap.data()
-                    const data = docSnap.data();
-                    this.info.push(data.currentDate);
-                    this.info.push(data.prevDate);
-                } else {
-                    console.log('El documento no existe.');
-                }
-            } catch (error) {
-                console.error("Error al obtener datos iniciales:", error);
-            }
-        },
-        async onDateChange(index: number) {
-            const infoItem = this.info[index];
-            if (!infoItem.date) return;
+            this.info.forEach((bill: InfoData, index: number) => {
+                raw[this.rawKey(index, 'buildingConsumption')] = asText(bill.buildingConsumption);
+                this.floorLabels.forEach((label: string, floorIndex: number) => {
+                    raw[this.rawKey(index, label)] = asText(bill.floors[floorIndex] ?? 0);
+                });
+            });
 
-            // Get Firebase document based on date
-            const docRef = doc(db, this.selectedBuilding, convertDate(infoItem.date));
-            const docSnap = await getDoc(docRef);
+            this.raw = raw;
+        },
+        onBuildingInput(index: number, value: string) {
+            this.raw[this.rawKey(index, 'buildingConsumption')] = value;
+            this.info[index].buildingConsumption = parseDecimalInput(value) ?? 0;
+        },
+        onFloorInput(index: number, floorIndex: number, value: string) {
+            this.raw[this.rawKey(index, this.floorLabels[floorIndex])] = value;
+            this.info[index].floors[floorIndex] = parseDecimalInput(value) ?? 0;
+        },
+        consumptionText(label: string, floorIndex: number): string {
+            const [current, previous] = this.info;
+            if (!current || !previous) return '—';
 
-            if (docSnap.exists()) {
-                // If the document exists, update the data in the info
-                const data = docSnap.data();
-                const sortedValues = this.floorLabels.map((label: string) => data[label]);
-                this.info[index].buildingConsumption = data["consumo total"];
-                this.info[index].floors = sortedValues;
-            } else {
-                // If the document does not exist, reset the data
-                this.info[index].buildingConsumption = 0;
-                this.info[index].floors = [0, 0, 0, 0];
-            }
+            const read = (bill: InfoData) =>
+                label === 'buildingConsumption' ? bill.buildingConsumption : bill.floors[floorIndex];
+
+            return `${(read(current) - read(previous)).toFixed(2)} kWh`;
         },
-        onCalculateButtonClick() {
-            this.$emit('calculate', this.info);
-        },
-        setSnackbar(value: boolean) {
-            this.snackbar = value;
-        },
-        setText(value: string) {
-            this.text = value;
-        },
-        async saveDataInFirebase() {
-            savePrevAndCurrentDataToTable(this.selectedBuilding, this.info);
-            saveDataBasedOnDays(this.selectedBuilding, this.info, this.setSnackbar, this.setText);
+        hasConsumptionError(label: string, floorIndex: number): boolean {
+            const [current, previous] = this.info;
+            if (!current || !previous) return false;
+
+            const read = (bill: InfoData) =>
+                label === 'buildingConsumption' ? bill.buildingConsumption : bill.floors[floorIndex];
+
+            return read(current) > 0 && read(previous) > 0 && read(current) < read(previous);
         },
     },
     watch: {
-        selectedBuilding: {
-            handler: 'fetchInitialData',
-            immediate: true, // Llama a la función fetchInitialData inmediatamente después de que el componente se monta
+        syncToken: {
+            handler: 'syncRawFromInfo',
+            immediate: true,
         },
     },
 }
 </script>
 
 <template>
-    <v-card>
-        <v-form>
-            <v-row class="mt-1" align="center">
-                <v-col cols="9">
-                    <v-select label="Selecciona" :items="buildingOptions" variant="outlined"
-                        v-model="selectedBuilding" />
-                </v-col>
-                <v-col cols="3">
-                    <v-btn
-                        variant="tonal"
-                        @click="saveDataInFirebase">
-                        Guardar
-                    </v-btn>
-                </v-col>
-            </v-row>
-            <v-row>
-                <v-col v-for="(d, index) in info" :key="index">
-                    <p>Factura {{ index === 0 ? "actual" : "anterior" }}:</p>
-                    <input type="date" v-model="d.date" @change="onDateChange(index)" />
+    <v-card class="pa-4 pa-sm-6 mb-4">
+        <div class="section-title">
+            <v-icon size="small" class="mr-2">mdi-counter</v-icon>
+            Lecturas del medidor
+        </div>
+        <p class="section-hint">
+            La lectura anterior se completa sola con el mes que guardaste la última vez.
+            Solo llena la columna "Actual". Si escribes una fecha que ya calculaste antes,
+            sus lecturas vuelven solas.
+        </p>
 
-                    <v-text-field v-model.number="d.buildingConsumption" type="number" label="Consumo total" />
+        <v-row dense>
+            <v-col v-for="(bill, index) in info" :key="index" cols="12" sm="6">
+                <v-text-field
+                    v-model="bill.date"
+                    @update:model-value="$emit('pickDate', index)"
+                    type="date"
+                    :label="index === 0 ? 'Fecha actual' : 'Fecha anterior'"
+                    density="comfortable"
+                    variant="outlined"
+                    :prepend-inner-icon="index === 0 ? 'mdi-calendar-end' : 'mdi-calendar-start'"
+                    hide-details="auto" />
+            </v-col>
+        </v-row>
 
-                    <template v-for="(floorLabel, index) in floorLabels" :key="index">
-                        <v-text-field v-model.number="d.floors[index]" type="number" :label="floorLabel" />
-                    </template>
-                </v-col>
-            </v-row>
-            <v-btn
-                @click="onCalculateButtonClick"
-                :disabled="!hasAllFieldsFilled"
-                variant="tonal">
-                Calcular watts por día
-            </v-btn>
-        </v-form>
+        <v-divider class="my-4" />
+
+        <v-row align="center" dense class="meter-row">
+            <v-col cols="12" sm="3">
+                <div class="meter-label">
+                    Consumo total
+                    <span class="meter-label__note">medidor general del edificio</span>
+                </div>
+            </v-col>
+            <v-col cols="6" sm="3">
+                <v-text-field
+                    :model-value="raw[rawKey(1, 'buildingConsumption')]"
+                    @update:model-value="onBuildingInput(1, $event)"
+                    label="Anterior"
+                    inputmode="decimal"
+                    density="compact"
+                    variant="outlined"
+                    hide-details />
+            </v-col>
+            <v-col cols="6" sm="3">
+                <v-text-field
+                    :model-value="raw[rawKey(0, 'buildingConsumption')]"
+                    @update:model-value="onBuildingInput(0, $event)"
+                    label="Actual"
+                    inputmode="decimal"
+                    density="compact"
+                    variant="outlined"
+                    :error="hasConsumptionError('buildingConsumption', 0)"
+                    hide-details />
+            </v-col>
+            <v-col cols="12" sm="3">
+                <div
+                    class="meter-consumption"
+                    :class="{ 'meter-consumption--error': hasConsumptionError('buildingConsumption', 0) }">
+                    {{ consumptionText('buildingConsumption', 0) }}
+                </div>
+            </v-col>
+        </v-row>
+
+        <v-row
+            v-for="(label, floorIndex) in floorLabels"
+            :key="label"
+            align="center"
+            dense
+            class="meter-row">
+            <v-col cols="12" sm="3">
+                <div class="meter-label">{{ label }}</div>
+            </v-col>
+            <v-col cols="6" sm="3">
+                <v-text-field
+                    :model-value="raw[rawKey(1, label)]"
+                    @update:model-value="onFloorInput(1, floorIndex, $event)"
+                    label="Anterior"
+                    inputmode="decimal"
+                    density="compact"
+                    variant="outlined"
+                    hide-details />
+            </v-col>
+            <v-col cols="6" sm="3">
+                <v-text-field
+                    :model-value="raw[rawKey(0, label)]"
+                    @update:model-value="onFloorInput(0, floorIndex, $event)"
+                    label="Actual"
+                    inputmode="decimal"
+                    density="compact"
+                    variant="outlined"
+                    :error="hasConsumptionError(label, floorIndex)"
+                    hide-details />
+            </v-col>
+            <v-col cols="12" sm="3">
+                <div
+                    class="meter-consumption"
+                    :class="{ 'meter-consumption--error': hasConsumptionError(label, floorIndex) }">
+                    {{ consumptionText(label, floorIndex) }}
+                </div>
+            </v-col>
+        </v-row>
+
+        <p class="section-hint mt-4 mb-0">
+            El 1er piso y el tanque no tienen medidor, así que no se escriben: lo que
+            consumen juntos es lo que sobra del medidor general.
+        </p>
     </v-card>
-    
-    <v-snackbar
-        v-model="snackbar"
-        :timeout="timeout"
-        color="deep-purple-accent-4"
-        location="top">
-        {{ text }}
-        <template v-slot:actions>
-            <v-btn
-                color="white"
-                variant="text"
-                @click="snackbar = false">
-                <v-icon dark large>mdi-close</v-icon>
-            </v-btn>
-        </template>
-    </v-snackbar>
 </template>
+
+<style scoped>
+.section-title {
+    display: flex;
+    align-items: center;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.section-hint {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin: 0.25rem 0 1rem;
+}
+
+.meter-row {
+    padding: 0.35rem 0;
+}
+
+.meter-label {
+    font-weight: 600;
+}
+
+.meter-label__note {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 400;
+    opacity: 0.65;
+}
+
+.meter-consumption {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    opacity: 0.85;
+}
+
+.meter-consumption--error {
+    color: rgb(var(--v-theme-error));
+}
+
+@media (max-width: 599px) {
+    .meter-consumption {
+        text-align: left;
+        font-size: 0.85rem;
+        padding-top: 0.25rem;
+    }
+}
+</style>

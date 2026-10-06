@@ -1,29 +1,40 @@
 <script lang="ts">
-import type { TableWithConstant } from "../../model/Types";
+import type { PropType } from "vue";
+import type { LoteBResult } from "../../utils/loteB";
+import { formatKwh, formatSoles } from "../../utils/billSplit";
 
 export default {
     props: {
-        infoToTable: {
-            type: Array<TableWithConstant>,
+        result: {
+            type: Object as PropType<LoteBResult>,
             required: true
         },
-        constant: {
-            type: Number,
-            required: true
+    },
+    computed: {
+        rows() {
+            return [...this.result.floors, this.result.tank].map((meter) => ({
+                title: meter.label,
+                consumption: meter.consumption,
+                energyCost: meter.energyCost,
+            }));
         },
+    },
+    methods: {
+        formatKwh,
+        formatSoles,
     },
 }
 </script>
 
 <template>
-    <p>Multiplicamos por la constante</p>
-    <v-table>
+    <p class="mt-4">Multiplicamos el consumo de cada uno por la constante</p>
+    <v-table density="comfortable">
         <tbody>
-            <tr v-for="(element, index) in infoToTable" :key="index">
-                <td>{{ element.title }}</td>
-                <td>{{ element.watts }} watts</td>
-                <td>x {{ constant }} =</td>
-                <td>S/ {{ (element.price).toFixed(2) }}</td>
+            <tr v-for="row in rows" :key="row.title">
+                <td>{{ row.title }}</td>
+                <td class="text-right">{{ formatKwh(row.consumption) }} kWh</td>
+                <td class="text-right">x {{ result.constant.toFixed(6) }} =</td>
+                <td class="text-right font-weight-bold">{{ formatSoles(row.energyCost) }}</td>
             </tr>
         </tbody>
     </v-table>

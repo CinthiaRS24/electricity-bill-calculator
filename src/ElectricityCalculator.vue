@@ -1,132 +1,103 @@
 <script lang="ts">
-import type { InfoData, TableRowItem } from "./model/Types";
-import EnergyConsumptionForm from './components/EnergyConsumptionForm.vue';
-import ConsumptionInfoTable from './components/ConsumptionInfoTable.vue';
-import CentralTable from './components/CentralTable.vue';
-import { roundTo2Decimals, getElapsedDays } from './utils/utilityMethods';
+import type { LoteConfig } from './model/Types';
+import LoteBCalculator from './views/LoteBCalculator.vue';
+import LoteCalculator from './views/LoteCalculator.vue';
+import { SPLIT_LOTES } from './model/lotes';
+
+const LOTE_B_ID = 'lote-b';
 
 export default {
     components: {
-        EnergyConsumptionForm,
-        ConsumptionInfoTable,
-        CentralTable
+        LoteBCalculator,
+        LoteCalculator,
     },
     data() {
         return {
-            tableItems: [] as any[],
-            prevDate: "" as string,
-            currentDate: "" as string,
-            differenceDays: "0" as string,
-            tank: 0 as number,
-            totalPrice: 0 as number,
-            floorLabels: [
-                "5to piso",
-                "4to piso",
-                "3er piso",
-                "2do piso"
-            ] as string[],
-        }
+            loteBId: LOTE_B_ID,
+            splitLotes: SPLIT_LOTES as LoteConfig[],
+            // Kept in the URL hash so a link can point straight at one lote.
+            selectedLote: 'lote-c' as string,
+        };
+    },
+    computed: {
+        tabs(): { id: string; label: string }[] {
+            return [
+                { id: LOTE_B_ID, label: 'Lote B' },
+                ...this.splitLotes.map((lote: LoteConfig) => ({ id: lote.id, label: lote.label })),
+            ];
+        },
     },
     methods: {
-        /**
-         * In order to generate a table item, we need the prev and current consumption.
-         * It works for floors and the total building consumptions.
-         */
-        formatTableItem(
-            label: string,
-            currentConsumption: number,
-            prevConsumption: number
-        ): TableRowItem {
-            const kwattsDifference = currentConsumption - prevConsumption;
-            const kwattsPerDay = roundTo2Decimals(kwattsDifference / Number(this.differenceDays));
-            const wattsPerDay = Math.round(kwattsPerDay * 1000);
-
-            return {
-                title: label,
-                prev: prevConsumption.toFixed(2),
-                current: currentConsumption.toFixed(2),
-                kwattsDiff: kwattsDifference.toFixed(2),
-                kwattsPerDay: String(kwattsPerDay),
-                wattsPerDay: wattsPerDay,
-            };
-        },
-        calcAndFillTable(info: InfoData[]) {
-            this.currentDate = info[0].date;
-            this.prevDate = info[1].date;
-            this.differenceDays = String(getElapsedDays(this.currentDate, this.prevDate));
-
-            const currentBuildingConsumption = info[0].buildingConsumption;
-            const prevBuildingConsumption = info[1].buildingConsumption;
-
-            const buildingConsumptionItem = this.formatTableItem(
-                'Consumo total',
-                currentBuildingConsumption,
-                prevBuildingConsumption
-            );
-
-            const floorItems = this.floorLabels.map((floorLabel: string, index: number) => {
-                const currentConsumption = info[0].floors[index];
-                const prevConsumption = info[1].floors[index];
-
-                // Calc
-                return this.formatTableItem(
-                    floorLabel,
-                    currentConsumption,
-                    prevConsumption
-                );
-            });
-
-            const firstFloorPlusTank = this.calcFirstFloorPlusTankWatts(
-                buildingConsumptionItem.wattsPerDay,
-                floorItems.map((floorItem: TableRowItem) => floorItem.wattsPerDay)
-            )
-
-            const firstFloorPlusTankItem = {
-                title: '1er piso + Tanque',
-                prev: "",
-                current: "",
-                kwattsDiff: "",
-                kwattsPerDay: "",
-                wattsPerDay: firstFloorPlusTank,
-            };
-
-            floorItems.push(firstFloorPlusTankItem);
-
-            this.tableItems = [buildingConsumptionItem].concat(floorItems);
-        },
-        calcFirstFloorPlusTankWatts(buildingwattsPerDay: number, floorsWattsPerDay: number[]) {
-            // Sum from the second to the fifth floor
-            const totalWattsFromSecondToFifthFloor = floorsWattsPerDay.reduce((acc, watts) => acc + watts, 0);
-
-            return buildingwattsPerDay - totalWattsFromSecondToFifthFloor;
-        },
-        updateTankAndTotalPrice(payload: { tank: number, totalPrice: number }) {
-            this.tank = payload.tank;
-            this.totalPrice = payload.totalPrice;
+        readLoteFromHash() {
+            const fromHash = window.location.hash.replace('#', '');
+            if (this.tabs.some((tab) => tab.id === fromHash)) {
+                this.selectedLote = fromHash;
+            }
         },
     },
-}
+    watch: {
+        selectedLote(lote: string) {
+            window.history.replaceState(null, '', `#${lote}`);
+        },
+    },
+    created() {
+        this.readLoteFromHash();
+    },
+    mounted() {
+        // Keeps the tab in sync when the link is edited or the back button is used.
+        window.addEventListener('hashchange', this.readLoteFromHash);
+    },
+    unmounted() {
+        window.removeEventListener('hashchange', this.readLoteFromHash);
+    },
+};
 </script>
 
 <template>
-    <!-- TODO: Rename updateStatus2 for a better name. Rename also the event names, to match the buttons. -->
-    <v-container fluid>
-        <v-row class="mb-4">
-            <v-col offset-md="1" offset="0" md="4" cols="12">
-                <EnergyConsumptionForm
-                    :floorLabels="floorLabels"
-                    @calculate="calcAndFillTable" />
-            </v-col>
-            <v-col md="6" cols="12">
-                <ConsumptionInfoTable
-                    @changeValueOfTankAndTotalPrice="updateTankAndTotalPrice"
-                    :tableItems="tableItems"
-                    :currentDate="currentDate"
-                    :prevDate="prevDate"
-                    :differenceDays="differenceDays" />
-            </v-col>
-        </v-row>
+    <v-app>
+        <v-app-bar flat density="comfortable" color="surface">
+            <v-app-bar-title class="app-title">
+                <v-icon size="small" class="mr-2">mdi-lightning-bolt</v-icon>
+                Reparto de luz
+            </v-app-bar-title>
+        </v-app-bar>
 
-        <CentralTable v-if="tableItems.length > 0" :tank="tank" :totalPrice="totalPrice" :tableItems="tableItems" />
-    </v-container>
+        <v-main>
+            <v-container class="pt-4">
+                <v-tabs v-model="selectedLote" density="comfortable" class="mb-5" grow>
+                    <v-tab v-for="tab in tabs" :key="tab.id" :value="tab.id">
+                        {{ tab.label }}
+                    </v-tab>
+                </v-tabs>
+
+                <!-- v-window, not v-tabs-window: this project is on Vuetify 3.4. -->
+                <v-window v-model="selectedLote" :touch="false">
+                    <v-window-item :value="loteBId" class="lote-pane">
+                        <LoteBCalculator />
+                    </v-window-item>
+                    <v-window-item
+                        v-for="lote in splitLotes"
+                        :key="lote.id"
+                        :value="lote.id"
+                        class="lote-pane">
+                        <LoteCalculator :config="lote" />
+                    </v-window-item>
+                </v-window>
+            </v-container>
+        </v-main>
+    </v-app>
 </template>
+
+<style scoped>
+.app-title {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+}
+
+/* v-window clips its content by default, which would cut off the longer pane. */
+.lote-pane,
+:deep(.v-window__container) {
+    overflow: visible;
+}
+</style>
