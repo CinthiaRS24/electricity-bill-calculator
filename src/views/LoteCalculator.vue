@@ -12,8 +12,7 @@ import {
     isSplitInputComplete,
     validateSplit,
 } from '../utils/billSplit';
-import { fetchLastMonths, fetchSharedTank, saveMonth } from '../utils/billSplitRepository';
-import { useSharedTank, type SharedTankState } from '../stores/sharedTanks';
+import { fetchLastMonths, saveMonth } from '../utils/billSplitRepository';
 
 export default {
     components: {
@@ -27,20 +26,8 @@ export default {
         },
     },
     data() {
-        // Lotes that share a tank meter all point at the same readings, so typing it
-        // on one tab is enough for the other one.
-        const sharedTank: SharedTankState | null = this.config.tankGroupId
-            ? useSharedTank(this.config.tankGroupId, tankShareCountFor(this.config))
-            : null;
-
-        // Built from the local `sharedTank` rather than through buildInput(), because
-        // the data properties this method reads do not exist yet at this point.
-        const input = createEmptyInput(this.config);
-        if (sharedTank) input.sharedTank = sharedTank;
-
         return {
-            sharedTank,
-            input: input as SplitInput,
+            input: createEmptyInput(this.config) as SplitInput,
             syncToken: 0,
             loading: true,
             saving: false,
@@ -72,14 +59,20 @@ export default {
         },
     },
     methods: {
-        /** A blank input wired to the shared tank readings when the lote has one. */
         buildInput(overrides: Partial<SplitInput> = {}): SplitInput {
-            const input = createEmptyInput(this.config);
-            Object.assign(input, overrides);
+            return Object.assign(createEmptyInput(this.config), overrides);
+        },
+        tankFromSaved(
+            currentReading: number | null,
+            previousReading: number | null
+        ): SplitInput['sharedTank'] | undefined {
+            if (!this.config.tankGroupId) return undefined;
 
-            if (this.sharedTank) input.sharedTank = this.sharedTank;
-
-            return input;
+            return {
+                previousReading,
+                currentReading,
+                shareCount: tankShareCountFor(this.config),
+            };
         },
         notify(text: string, color = 'deep-purple-accent-4') {
             this.snackbarText = text;
@@ -87,9 +80,9 @@ export default {
             this.snackbar = true;
         },
         reload() {
-            this.loadLastSavedMonth(true);
+            this.loadLastSavedMonth();
         },
-        async loadLastSavedMonth(forceSharedTank = false) {
+        async loadLastSavedMonth() {
             this.loading = true;
             try {
                 const saved = await fetchLastMonths(this.config);
@@ -102,11 +95,14 @@ export default {
                         previousReadings: saved.previous.readings,
                         energyCharge: saved.current.energyCharge,
                         totalBill: saved.current.totalBill,
+                        sharedTank: this.tankFromSaved(
+                            saved.current.tankReading,
+                            saved.previous.tankReading
+                        ),
                     });
                     this.lastSavedDate = saved.current.date;
                 }
 
-                await this.loadSharedTank(forceSharedTank);
                 this.syncToken++;
 
                 if (!saved) {
@@ -123,50 +119,25 @@ export default {
             }
         },
         /**
-         * Only read once per session unless it is asked for again: the other lote may
-         * already have the reading typed in and it should not be thrown away.
-         */
-        async loadSharedTank(force: boolean) {
-            const tank = this.sharedTank;
-            if (!tank || !this.config.tankGroupId) return;
-            if (tank.loaded && !force) return;
-
-            const saved = await fetchSharedTank(this.config.tankGroupId);
-            if (saved) {
-                tank.previousReading = saved.previousReading;
-                tank.currentReading = saved.currentReading;
-            }
-            tank.loaded = true;
-        },
-        /**
          * Does by hand what used to be done on the spreadsheet: the readings of the
          * month just closed become the previous ones, and the current column is cleared.
+         * Only this lote moves; the other one that shares the tank keeps its own month.
          */
         startNewMonth() {
             const previousDate = this.input.currentDate;
             const previousReadings = { ...this.input.currentReadings };
-
-            // Guarded so pressing the button on both lotes does not roll the shared
-            // tank over twice and lose the reading.
-            if (this.sharedTank && this.sharedTank.currentReading !== null) {
-                this.sharedTank.previousReading = this.sharedTank.currentReading;
-                this.sharedTank.currentReading = null;
-            }
+            const tank = this.input.sharedTank;
 
             this.input = this.buildInput({
                 previousDate,
                 previousReadings,
                 currentReadings: createEmptyReadings(this.config),
+                sharedTank: this.tankFromSaved(null, tank?.currentReading ?? null),
             });
             this.syncToken++;
             this.notify('Listo: las lecturas del mes anterior quedaron como referencia.');
         },
         clearAll() {
-            if (this.sharedTank) {
-                this.sharedTank.previousReading = null;
-                this.sharedTank.currentReading = null;
-            }
-
             this.input = this.buildInput();
             this.syncToken++;
         },
@@ -208,8 +179,9 @@ export default {
             variant="tonal"
             type="warning"
             class="mb-4">
-            Este lote comparte el tanque con el {{ sharedWithLabel }}: la lectura se escribe
-            una sola vez y aparece en las dos pestañas.
+            Este lote comparte el medidor del tanque con el {{ sharedWithLabel }}: a cada
+            uno le toca la mitad. Escríbelo en este lote; no se copia solo al otro, para
+            no mezclar meses distintos.
         </v-alert>
 
         <div class="actions mb-4">

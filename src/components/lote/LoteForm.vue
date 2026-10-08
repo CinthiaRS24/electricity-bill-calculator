@@ -134,16 +134,6 @@ export default {
             this.raw[this.rawKey(field)] = value;
             this.input[field] = parseDecimalInput(value);
         },
-        /**
-         * The shared tank can also be typed on the other lote's tab, so the text shown
-         * here follows those changes without overwriting what is being typed now.
-         */
-        followSharedTank(field: SharedTankField, value: number | null) {
-            const key = this.rawKey('sharedTank', field);
-            if (parseDecimalInput(this.raw[key]) === value) return;
-
-            this.raw[key] = typeof value === 'number' ? String(value) : '';
-        },
         consumptionText(label: string): string {
             const current = this.input.currentReadings[label];
             const previous = this.input.previousReadings[label];
@@ -162,12 +152,6 @@ export default {
         syncToken: {
             handler: 'syncRawFromInput',
             immediate: true,
-        },
-        'input.sharedTank.previousReading'(value: number | null) {
-            this.followSharedTank('previousReading', value);
-        },
-        'input.sharedTank.currentReading'(value: number | null) {
-            this.followSharedTank('currentReading', value);
         },
     },
 };
@@ -254,14 +238,14 @@ export default {
             </v-col>
         </v-row>
 
-        <!-- One meter feeds several lotes, so it is typed once and split equally. -->
+        <!-- Same meter as another lote, split in half, but typed on this lote's month. -->
         <v-row v-if="hasSharedTank" align="center" dense class="meter-row meter-row--tank">
             <v-col cols="12" sm="3">
                 <div class="meter-label">
                     Tanque compartido
                     <span class="meter-label__note">
-                        el mismo medidor que el {{ sharedWithLabel }}; a este lote le toca la
-                        mitad, que luego se divide entre los {{ floorCount }} pisos
+                        el mismo medidor que el {{ sharedWithLabel }}; escríbelo aquí. A este
+                        lote le toca la mitad, que luego se divide entre los {{ floorCount }} pisos
                     </span>
                 </div>
             </v-col>

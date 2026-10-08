@@ -82,8 +82,9 @@ Los cuatro lotes funcionan igual:
 
 Lo propio de cada lote:
 
-- En **E e I** el tanque compartido se escribe una sola vez: aparece al instante en la
-  otra pestaña, sin necesidad de guardar.
+- En **E e I** el tanque es el mismo medidor y a cada lote le toca la mitad, pero se
+  escribe en cada pestaña. Así un lote puede ir un mes adelante sin pisar el tanque
+  del otro.
 - En **B**, escribir una fecha que ya se calculó antes trae sus lecturas de vuelta (hay
   meses guardados desde 2024). Y debajo del cuadro está **Ver el detalle del cálculo**
   con los pasos intermedios: la deducción del primer piso y la constante.
@@ -94,9 +95,9 @@ Todo en Firestore. Los lotes C, E e I usan colecciones propias, para no mezclars
 los datos antiguos del lote C que tenían la forma del lote B
 (`src/utils/billSplitRepository.ts`):
 
-- `{LOTE} RECIBOS/{DDMMYYYY}` — un documento por mes calculado.
+- `{LOTE} RECIBOS/{DDMMYYYY}` — un documento por mes calculado, con su tanque si el
+  lote comparte medidor.
 - `{LOTE} STATE/ultimo` — el último par de meses, que es lo que precarga el formulario.
-- `TANQUE COMPARTIDO/villa-garcia` — las lecturas del tanque que dividen E e I.
 
 El lote B conserva las colecciones que viene usando desde 2024, para no perder su
 historia ni la búsqueda por fecha (`src/utils/loteBRepository.ts`):

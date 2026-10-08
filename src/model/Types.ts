@@ -148,12 +148,9 @@ export interface SavedMonth {
     readings: Readings;
     energyCharge: number | null;
     totalBill: number | null;
-}
-
-/** Readings of a shared tank meter, saved once for the whole group. */
-export interface SavedSharedTank {
-    currentDate: string;
-    previousDate: string;
-    currentReading: number | null;
-    previousReading: number | null;
+    /**
+     * Reading of the shared tank meter on this month's date. Kept on the lote itself
+     * so E and I can be on different months without overwriting each other.
+     */
+    tankReading: number | null;
 }

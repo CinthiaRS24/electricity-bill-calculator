@@ -1,12 +1,6 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import type {
-    LoteConfig,
-    Readings,
-    SavedMonth,
-    SavedSharedTank,
-    SplitInput,
-} from '../model/Types';
+import type { LoteConfig, Readings, SavedMonth, SplitInput } from '../model/Types';
 import { meterLabelsFor } from '../model/lotes';
 import { createEmptyReadings } from './billSplit';
 import { convertDate } from './utilityMethods';
@@ -17,7 +11,6 @@ import { convertDate } from './utilityMethods';
  * legacy ones.
  */
 const STATE_DOCUMENT = 'ultimo';
-const SHARED_TANK_COLLECTION = 'TANQUE COMPARTIDO';
 
 function stateCollection(config: LoteConfig): string {
     return `${config.collectionPrefix} STATE`;
@@ -50,11 +43,19 @@ function sanitizeReadings(raw: unknown, config: LoteConfig): Readings {
 function sanitizeMonth(raw: unknown, config: LoteConfig): SavedMonth {
     const source = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
 
+    const nestedTank =
+        source.sharedTank && typeof source.sharedTank === 'object'
+            ? (source.sharedTank as Record<string, unknown>)
+            : null;
+
     return {
         date: typeof source.date === 'string' ? source.date : '',
         readings: sanitizeReadings(source.readings, config),
         energyCharge: toReadingOrNull(source.energyCharge),
         totalBill: toReadingOrNull(source.totalBill),
+        tankReading:
+            toReadingOrNull(source.tankReading) ??
+            toReadingOrNull(nestedTank?.currentReading),
     };
 }
 
@@ -65,31 +66,30 @@ export async function fetchLastMonths(config: LoteConfig): Promise<LastMonths | 
 
     const data = snapshot.data();
 
-    return {
-        current: sanitizeMonth(data.current, config),
-        previous: sanitizeMonth(data.previous, config),
-    };
-}
+    const current = sanitizeMonth(data.current, config);
+    const previous = sanitizeMonth(data.previous, config);
 
-export async function fetchSharedTank(groupId: string): Promise<SavedSharedTank | null> {
-    const snapshot = await getDoc(doc(db, SHARED_TANK_COLLECTION, groupId));
-    if (!snapshot.exists()) return null;
+    // Older STATE documents did not store the tank on each month. The bill of that
+    // date still has it, so the lote can reopen without borrowing the other lote's tank.
+    if (config.tankGroupId && current.tankReading === null && current.date) {
+        const bill = await getDoc(doc(db, billsCollection(config), convertDate(current.date)));
+        if (bill.exists()) {
+            const tank = bill.data().sharedTank as Record<string, unknown> | undefined;
+            current.tankReading = toReadingOrNull(tank?.currentReading);
+            if (previous.tankReading === null) {
+                previous.tankReading = toReadingOrNull(tank?.previousReading);
+            }
+        }
+    }
 
-    const data = snapshot.data();
-
-    return {
-        currentDate: typeof data.currentDate === 'string' ? data.currentDate : '',
-        previousDate: typeof data.previousDate === 'string' ? data.previousDate : '',
-        currentReading: toReadingOrNull(data.currentReading),
-        previousReading: toReadingOrNull(data.previousReading),
-    };
+    return { current, previous };
 }
 
 /**
  * Keeps one document per billed month plus a pointer to the latest pair of months,
  * which is what lets the next month start with the previous readings already filled.
- * A shared tank meter is stored once for the whole group, so entering it on one lote
- * is enough for the other one.
+ * A shared tank is stored on the lote that typed it, not on a group document, so
+ * filling September on E does not overwrite August on I.
  */
 export async function saveMonth(config: LoteConfig, input: SplitInput): Promise<void> {
     const current: SavedMonth = {
@@ -97,12 +97,14 @@ export async function saveMonth(config: LoteConfig, input: SplitInput): Promise<
         readings: sanitizeReadings(input.currentReadings, config),
         energyCharge: input.energyCharge,
         totalBill: input.totalBill,
+        tankReading: input.sharedTank?.currentReading ?? null,
     };
     const previous: SavedMonth = {
         date: input.previousDate,
         readings: sanitizeReadings(input.previousReadings, config),
         energyCharge: null,
         totalBill: null,
+        tankReading: input.sharedTank?.previousReading ?? null,
     };
 
     await setDoc(doc(db, billsCollection(config), convertDate(input.currentDate)), {
@@ -119,14 +121,4 @@ export async function saveMonth(config: LoteConfig, input: SplitInput): Promise<
     });
 
     await setDoc(doc(db, stateCollection(config), STATE_DOCUMENT), { current, previous });
-
-    if (config.tankGroupId && input.sharedTank) {
-        const sharedTank: SavedSharedTank = {
-            currentDate: input.currentDate,
-            previousDate: input.previousDate,
-            currentReading: input.sharedTank.currentReading,
-            previousReading: input.sharedTank.previousReading,
-        };
-        await setDoc(doc(db, SHARED_TANK_COLLECTION, config.tankGroupId), sharedTank);
-    }
 }
